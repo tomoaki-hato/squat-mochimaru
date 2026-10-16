@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>スクワットもちまる</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-screen nursery — pet stage in the middle, big rep counter under it, controls docked at the bottom. Single light look by choice. */
+:root{
+  --bg:#E6F2EE;        /* pale mint nursery wall */
+  --floor:#CFE6DE;
+  --ink:#24363A;
+  --muted:#5D7275;
+  --card:#FFFFFF;
+  --coral:#FF6F86;     /* action / hearts */
+  --sun:#FFC24A;       /* progress */
+  --mochi:#FFEFE4;     /* pet body */
+  --mochi-edge:#F2CDB8;
+  --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;overflow-x:hidden}
+.app{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:14px 18px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0;letter-spacing:.02em}
+.stage-tag{font-weight:900;font-size:13px;background:var(--card);border-radius:999px;padding:4px 12px;color:var(--coral);white-space:nowrap}
+
+.room{position:relative;flex:1;min-height:270px;display:grid;place-items:center;
+  background:radial-gradient(ellipse 70% 18% at 50% 88%,var(--floor) 0 60%,transparent 61%)}
+#pet{width:min(78vw,300px);height:min(78vw,300px);transform-origin:50% 92%}
+#pet.hop{animation:hop .45s cubic-bezier(.3,1.6,.5,1)}
+#pet.grow{animation:grow 1s ease}
+@keyframes hop{0%{transform:scale(1.12,.86)}45%{transform:translateY(-18px) scale(.94,1.08)}100%{transform:none}}
+@keyframes grow{0%{transform:scale(.6);filter:brightness(1.6)}60%{transform:scale(1.15)}100%{transform:none}}
+.idle{animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.02,.98)}}
+.bubble{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--card);border-radius:16px;padding:8px 14px;font-weight:700;font-size:14px;white-space:nowrap;box-shadow:0 2px 0 var(--floor);transition:opacity .3s}
+.bubble::after{content:"";position:absolute;bottom:-7px;left:50%;margin-left:-7px;border:7px solid transparent;border-top-color:var(--card);border-bottom:0}
+.heart{position:absolute;font-size:22px;color:var(--coral);pointer-events:none;animation:float 1.1s ease-out forwards}
+@keyframes float{to{transform:translateY(-90px) scale(1.4);opacity:0}}
+
+.count-row{display:flex;align-items:flex-end;justify-content:center;gap:6px;line-height:1}
+#count{font-family:var(--display);font-size:72px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.count-row span{font-weight:900;font-size:18px;padding-bottom:10px}
+.progress{display:flex;flex-direction:column;gap:6px}
+.bar{height:12px;border-radius:999px;background:var(--card);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--sun);border-radius:inherit;transition:width .4s}
+#next{font-size:13px;color:var(--muted);text-align:center;font-weight:700}
+
+.dock{display:flex;flex-direction:column;gap:10px}
+.btn{font:inherit;font-weight:900;font-size:17px;border:0;border-radius:18px;padding:16px;background:var(--coral);color:#fff;box-shadow:0 4px 0 #D94C64;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #D94C64}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:0 4px 0 var(--floor)}
+.btn:focus-visible,.small:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.status{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:10px 14px;font-size:13px;font-weight:700}
+.meter{width:10px;height:36px;border-radius:5px;background:var(--bg);position:relative;overflow:hidden;flex:none}
+.meter i{position:absolute;left:0;right:0;top:50%;height:0;background:var(--coral)}
+.status p{margin:0;min-width:0}
+.notice{background:#FFF4D6;border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.6;margin:0}
+details{font-size:13px}
+summary{cursor:pointer;color:var(--muted);font-weight:700;padding:4px 0}
+.settings{display:flex;flex-direction:column;gap:12px;padding-top:8px}
+.settings label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-weight:700}
+input[type=range]{flex:1;accent-color:var(--coral)}
+.small{font:inherit;font-weight:700;font-size:13px;border:0;border-radius:12px;padding:8px 12px;background:var(--card);color:var(--ink);cursor:pointer}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){#pet,.idle,.heart{animation:none!important}}
+</style>
+
+<div class="app">
+  <header>
+    <h1>もちまる</h1>
+    <span class="stage-tag" id="stageTag">たまご</span>
+  </header>
+
+  <div class="room" id="room">
+    <div class="bubble" id="bubble">スクワットでかえしてね</div>
+    <svg id="pet" class="idle" viewBox="0 0 200 200" role="img" aria-label="ペット"></svg>
+  </div>
+
+  <div class="count-row"><b id="count">0</b><span>回</span></div>
+  <div class="progress">
+    <div class="bar"><i id="barFill"></i></div>
+    <div id="next">あと5回でうまれるよ</div>
+  </div>
+
+  <div class="dock">
+    <button class="btn" id="startBtn">スクワットをはじめる</button>
+    <div class="status" id="status" hidden>
+      <div class="meter"><i id="meterFill"></i></div>
+      <p id="statusText">スマホを胸の前で持って、しゃがんで立とう</p>
+    </div>
+    <p class="notice" id="notice" hidden></p>
+    <button class="btn ghost" id="tapBtn" hidden>1回できた！（タップで数える）</button>
+    <details>
+      <summary>設定</summary>
+      <div class="settings">
+        <label for="sens">感度 <input type="range" id="sens" min="1" max="5" value="3"></label>
+        <div class="confirm" id="resetArea">
+          <button class="small" id="resetBtn">育成をリセット</button>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+const STAGES=[
+  {at:0,  name:"たまご",    line:"スクワットでかえしてね"},
+  {at:5,  name:"あかちゃん", line:"うまれたよ！ぴよ！"},
+  {at:15, name:"こども",    line:"耳がはえたよ！"},
+  {at:30, name:"わんぱく",  line:"頭に芽が出た！"},
+  {at:60, name:"りっぱ",    line:"お花がさいた！"},
+  {at:100,name:"でんせつ",  line:"王さまになったよ！"}
+];
+const CHEERS=["いいね！","もう1回！","その調子！","ぷにぷに〜","ナイス！","かっこいい！","足、つよい！"];
+const $=id=>document.getElementById(id);
+let total=0, session=0;
+
+function load(){try{const v=parseInt(localStorage.getItem("mochimaru-total"),10);if(v>0)total=v;}catch(e){}}
+function save(){try{localStorage.setItem("mochimaru-total",String(total));}catch(e){}}
+function stageOf(n){let s=0;STAGES.forEach((st,i)=>{if(n>=st.at)s=i});return s;}
+
+function petSVG(s){
+  if(s===0){
+    return `<ellipse cx="100" cy="182" rx="46" ry="7" fill="#BFDCD2"/>
+    <path d="M100 52c30 0 50 44 50 80s-22 48-50 48-50-12-50-48 20-80 50-80z" fill="#FFF8F0" stroke="var(--mochi-edge)" stroke-width="3"/>
+    <circle cx="82" cy="108" r="8" fill="#FFD3C2"/><circle cx="116" cy="88" r="6" fill="#FFE29A"/><circle cx="120" cy="140" r="10" fill="#FFD3C2"/><circle cx="84" cy="152" r="5" fill="#FFE29A"/>`;
+  }
+  const r=[0,40,52,62,70,78][s];
+  const cy=180-r*0.85, rx=r*1.12;
+  let back="",front="";
+  if(s>=2){ // ears
+    back+=`<ellipse cx="${100-r*0.62}" cy="${cy-r*0.7}" rx="${r*0.22}" ry="${r*0.34}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3" transform="rotate(-20 ${100-r*0.62} ${cy-r*0.7})"/>
+           <ellipse cx="${100+r*0.62}" cy="${cy-r*0.7}" rx="${r*0.22}" ry="${r*0.34}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3" transform="rotate(20 ${100+r*0.62} ${cy-r*0.7})"/>`;
+  }
+  if(s>=3){ // tail
+    back+=`<circle cx="${100+rx*0.95}" cy="${cy+r*0.45}" r="${r*0.2}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3"/>`;
+  }
+  const top=cy-r*0.88;
+  if(s===1){ // shell hat
+    front+=`<path d="M${100-r*0.45} ${top+6} l${r*0.15} -14 l${r*0.15} 10 l${r*0.15} -12 l${r*0.15} 12 l${r*0.15} -14 l${r*0.15} 16 z" fill="#FFF8F0" stroke="var(--mochi-edge)" stroke-width="3" stroke-linejoin="round"/>`;
+  }
+  if(s===3){ // sprout
+    front+=`<path d="M100 ${top+4} v-16" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M100 ${top-10} c-14 -10 -24 -2 -24 -2 c8 10 24 2 24 2z M100 ${top-10} c14 -10 24 -2 24 -2 c-8 10 -24 2 -24 2z" fill="#7CC795"/>`;
+  }
+  if(s===4){ // flower
+    front+=`<path d="M100 ${top+4} v-14" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/>`;
+    for(let i=0;i<5;i++){const a=i*72*Math.PI/180;front+=`<circle cx="${100+Math.cos(a)*9}" cy="${top-18+Math.sin(a)*9}" r="7" fill="var(--coral)"/>`;}
+    front+=`<circle cx="100" cy="${top-18}" r="6" fill="var(--sun)"/>`;
+  }
+  if(s===5){ // crown + sparkles
+    front+=`<path d="M${100-24} ${top+6} l-4 -26 l14 12 l14 -20 l14 20 l14 -12 l-4 26 z" fill="var(--sun)" stroke="#E0A11F" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="100" cy="${top-6}" r="4" fill="var(--coral)"/>`;
+    [[30,60],[172,74],[24,140],[178,150]].forEach(([x,y])=>{front+=`<path d="M${x} ${y-9} L${x+3} ${y-3} L${x+9} ${y} L${x+3} ${y+3} L${x} ${y+9} L${x-3} ${y+3} L${x-9} ${y} L${x-3} ${y-3}Z" fill="var(--sun)"/>`;});
+  }
+  const eyeY=cy-r*0.1, eyeDX=r*0.36, er=Math.max(4,r*0.09);
+  const feet = s>=2 ? `<ellipse cx="${100-r*0.45}" cy="${cy+r*0.86}" rx="${r*0.24}" ry="${r*0.12}" fill="var(--mochi-edge)"/><ellipse cx="${100+r*0.45}" cy="${cy+r*0.86}" rx="${r*0.24}" ry="${r*0.12}" fill="var(--mochi-edge)"/>` : "";
+  return `<ellipse cx="100" cy="186" rx="${rx*0.9}" ry="7" fill="#BFDCD2"/>
+  ${back}${feet}
+  <path d="M${100-rx} ${cy+r*0.3} C${100-rx} ${cy-r*1.05} ${100+rx} ${cy-r*1.05} ${100+rx} ${cy+r*0.3} C${100+rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.3}Z" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3"/>
+  <circle cx="${100-eyeDX}" cy="${eyeY}" r="${er}" fill="var(--ink)"/><circle cx="${100+eyeDX}" cy="${eyeY}" r="${er}" fill="var(--ink)"/>
+  <circle cx="${100-eyeDX+er*0.35}" cy="${eyeY-er*0.35}" r="${er*0.35}" fill="#fff"/><circle cx="${100+eyeDX+er*0.35}" cy="${eyeY-er*0.35}" r="${er*0.35}" fill="#fff"/>
+  <ellipse cx="${100-eyeDX-r*0.12}" cy="${eyeY+r*0.22}" rx="${r*0.13}" ry="${r*0.07}" fill="#FFB3BF"/><ellipse cx="${100+eyeDX+r*0.12}" cy="${eyeY+r*0.22}" rx="${r*0.13}" ry="${r*0.07}" fill="#FFB3BF"/>
+  <path d="M${100-r*0.1} ${eyeY+r*0.16} q${r*0.1} ${r*0.12} ${r*0.2} 0" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>
+  ${front}`;
+}
+
+let shownStage=-1, bubbleTimer;
+function say(t,ms){const b=$("bubble");b.textContent=t;b.style.opacity=1;clearTimeout(bubbleTimer);if(ms)bubbleTimer=setTimeout(()=>b.style.opacity=0,ms);}
+function render(){
+  const s=stageOf(total);
+  $("count").textContent=total;
+  $("stageTag").textContent=STAGES[s].name;
+  if(s!==shownStage){$("pet").innerHTML=petSVG(s);if(shownStage>=0){bump("grow");say(STAGES[s].line,2600);}shownStage=s;}
+  const nx=STAGES[s+1];
+  if(nx){const p=(total-STAGES[s].at)/(nx.at-STAGES[s].at);$("barFill").style.width=(p*100)+"%";
+    const left=nx.at-total;$("next").textContent=s===0?`あと${left}回でうまれるよ`:`あと${left}回で「${nx.name}」に成長`;}
+  else{$("barFill").style.width="100%";$("next").textContent=`でんせつ達成！ 今回 ${session}回`;}
+}
+function bump(cls){const p=$("pet");p.classList.remove("hop","grow","idle");void p.offsetWidth;p.classList.add(cls);
+  p.addEventListener("animationend",()=>{p.classList.remove(cls);p.classList.add("idle");},{once:true});}
+function heart(){const h=document.createElement("span");h.className="heart";h.textContent="♥";
+  h.style.left=(40+Math.random()*20)+"%";h.style.top="45%";$("room").appendChild(h);setTimeout(()=>h.remove(),1200);}
+
+let actx;
+function beep(f){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=f;
+  g.gain.setValueAtTime(.15,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.18);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.2);}catch(e){}}
+
+function rep(){
+  const before=stageOf(total);total++;session++;save();
+  bump("hop");heart();
+  if(stageOf(total)===before)say(CHEERS[Math.floor(Math.random()*CHEERS.length)],1200);
+  beep(stageOf(total)!==before?880:620);
+  try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}
+  render();
+}
+
+/* --- squat detection: one rep = a push phase (pos accel) followed by a lift-off/settle phase (neg accel) --- */
+const TH=[0,2.2,1.8,1.4,1.1,0.8];
+let base=null,f=0,phase=0,posStart=0,lastRep=0,gotMotion=false,running=false;
+function onMotion(e){
+  const a=e.accelerationIncludingGravity; if(!a||a.x==null)return;
+  gotMotion=true;
+  const m=Math.hypot(a.x,a.y,a.z);
+  if(base===null)base=m;
+  base+=(m-base)*0.01; const d=m-base; f+=(d-f)*0.25;
+  const T=TH[+$("sens").value], now=performance.now();
+  if(f>T){ if(phase!==1){phase=1;posStart=now;} }
+  else if(f<-T*0.8){ if(phase===1&&now-posStart>120&&now-lastRep>900){lastRep=now;rep();} phase=-1; }
+  const mf=$("meterFill"),h=Math.min(18,Math.abs(f)/T*12);
+  mf.style.height=h+"px";mf.style.top=f>0?(18-h)+"px":"18px";
+}
+
+async function start(){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+    const r=await DeviceMotionEvent.requestPermission(); if(r!=="granted")throw new Error("denied");}}catch(e){}
+  try{await navigator.wakeLock?.request("screen");}catch(e){}
+  window.addEventListener("devicemotion",onMotion);
+  running=true;$("startBtn").hidden=true;$("status").hidden=false;
+  say(total<5?"しゃがんで、立って！":"いっしょにがんばろ！",2000);
+  setTimeout(()=>{if(!gotMotion){
+    $("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
+    $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをブラウザ（Safari や Chrome）で直接開いてください。";
+  }},1800);
+}
+$("startBtn").addEventListener("click",start);
+$("tapBtn").addEventListener("click",()=>{if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}rep();});
+
+function restoreReset(){$("resetArea").innerHTML=`<button class="small" id="resetBtn">育成をリセット</button>`;bindReset();}
+bindReset();
+function bindReset(){$("resetBtn").onclick=()=>{const area=$("resetArea");area.innerHTML=`<span>本当にたまごに戻す？</span><button class="small" id="yes">リセットする</button><button class="small" id="no">やめる</button>`;
+  $("yes").onclick=()=>{total=0;session=0;save();shownStage=-1;render();say(STAGES[0].line);restoreReset();};$("no").onclick=restoreReset;};}
+
+function boot(data){ if(data&&data.total>=0){total=data.total;session=data.session||0;} else load(); render(); }
+window.claude?.hot?.snapshot?.(()=>({total,session}));
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? null);
+</script>
+
+</body>
+</html>
