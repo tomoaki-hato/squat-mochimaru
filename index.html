@@ -86,6 +86,18 @@ input[type=range]{flex:1;accent-color:var(--coral)}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .small{font:inherit;font-weight:700;font-size:13px;border:0;border-radius:12px;padding:8px 12px;background:var(--card);color:var(--ink);cursor:pointer}
 .hint{margin:0;color:var(--muted);line-height:1.6}
+.out{min-width:3.2em;text-align:right;font-variant-numeric:tabular-nums}
+.dbg-group{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.seg .small{padding:8px 4px}
+.seg .small.on,.items .on{background:var(--ink);color:#fff}
+.gallery{display:grid;grid-template-columns:auto repeat(4,1fr);gap:4px;align-items:center;font-size:11px;color:var(--muted)}
+.gallery svg{width:100%;height:auto;background:var(--card);border-radius:10px}
+.gallery .gh{text-align:center}
+.gallery .gr{writing-mode:horizontal-tb;white-space:nowrap;padding-right:4px}
+.items{display:flex;flex-wrap:wrap;gap:4px}
+.items button{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:10px;padding:6px 8px;background:var(--card);color:var(--ink);cursor:pointer}
+.dbg-badge{position:absolute;bottom:14px;left:14px;background:var(--sun);color:var(--ink);font-size:11px;font-weight:900;border-radius:8px;padding:3px 8px}
 @media (prefers-reduced-motion:reduce){#room .pet,#room .new,.heart{animation:none!important}}
 </style>
 
@@ -128,6 +140,37 @@ input[type=range]{flex:1;accent-color:var(--coral)}
         <div class="row" id="resetArea"></div>
       </div>
     </details>
+    <details id="debug">
+      <summary>デバッグ</summary>
+      <div class="settings">
+        <p class="hint">ここで変えた状態はプレビューです。「元のデータに戻す」で元に戻り、「この状態を保存」を押したときだけ保存されます。</p>
+        <label for="dbgDays">達成日数 <input type="range" id="dbgDays" min="0" max="35" value="0"><output id="dbgDaysOut" class="out">0日</output></label>
+        <p class="hint" id="dbgInfo"></p>
+        <div class="dbg-group">
+          <span>健康</span>
+          <div class="seg" id="dbgHealth">
+            <button class="small" data-h="3">げんき</button><button class="small" data-h="2">つかれ</button><button class="small" data-h="1">よわってる</button><button class="small" data-h="0">びょうき</button>
+          </div>
+        </div>
+        <label for="dbgCount">今日の回数 <input type="range" id="dbgCount" min="0" max="60" value="0"><output id="dbgCountOut" class="out">0回</output></label>
+        <div class="row">
+          <button class="small" id="dbgPlus">+1回（スクワット扱い）</button>
+          <button class="small" id="dbgCele">達成演出を見る</button>
+        </div>
+        <div class="row">
+          <button class="small" id="dbgRestore">元のデータに戻す</button>
+          <button class="small" id="dbgSave">この状態を保存</button>
+        </div>
+        <div class="dbg-group">
+          <span>ペット全種類（成長 × 健康）</span>
+          <div class="gallery" id="gallery"></div>
+        </div>
+        <div class="dbg-group">
+          <span>家具が届く日</span>
+          <div class="items" id="itemList"></div>
+        </div>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -151,7 +194,8 @@ let S={achieved:0,health:3,days:{},last:null,offset:0};
 function todayDate(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+S.offset);return d;}
 const todayKey=()=>keyOf(todayDate());
 function load(){try{const v=JSON.parse(localStorage.getItem("mochimaru-v2"));if(v&&typeof v==="object")S=Object.assign(S,v);}catch(e){}}
-function save(){try{localStorage.setItem("mochimaru-v2",JSON.stringify(S));}catch(e){}}
+let backup=null; // set while the debug panel is previewing
+function save(){if(backup)return;try{localStorage.setItem("mochimaru-v2",JSON.stringify(S));}catch(e){}}
 
 /* days that ended below the goal (including days the game was not opened) cost one heart each */
 function rollover(){
@@ -280,7 +324,37 @@ function render(fresh){
     const cls=n>=GOAL?"ok":(i>0&&S.last&&dateOf(k)>=dateOf(S.firstDay||k)?"miss":"");
     w+=`<div class="day"><span class="dot ${cls} ${i===0?"today":""}">${n>=GOAL?"✓":n||""}</span>${i===0?"今日":wd[d.getDay()]}</div>`;}
   $("week").innerHTML=w;
+  syncDebug();
 }
+
+/* ---------- debug ---------- */
+function syncDebug(){
+  const a=S.achieved,c=S.days[todayKey()]||0;
+  $("dbgDays").value=Math.min(35,a);$("dbgDaysOut").textContent=a+"日";
+  $("dbgCount").value=Math.min(60,c);$("dbgCountOut").textContent=c+"回";
+  const got=Object.keys(ITEMS).map(Number).filter(k=>k<=a);
+  $("dbgInfo").textContent=`成長：${STAGES[stageOf(a)].name}／お部屋：${a>=14?"いちばん広い":a>=7?"広い":"せまい"}／家具 ${got.length}/${Object.keys(ITEMS).length}`;
+  document.querySelectorAll("#dbgHealth button").forEach(b=>b.classList.toggle("on",+b.dataset.h===S.health));
+  document.querySelectorAll("#itemList button").forEach(b=>b.classList.toggle("on",+b.dataset.a<=a));
+  let badge=document.querySelector(".dbg-badge");
+  if(backup&&!badge){badge=document.createElement("span");badge.className="dbg-badge";badge.textContent="デバッグ表示中";$("scene").appendChild(badge);}
+  if(!backup&&badge)badge.remove();
+}
+function dbgStart(){if(!backup)backup=JSON.parse(JSON.stringify(S));}
+$("dbgDays").addEventListener("input",e=>{dbgStart();const a=+e.target.value;S.achieved=a;render(ITEMS[a]?a:undefined);});
+$("dbgCount").addEventListener("input",e=>{dbgStart();S.days[todayKey()]=+e.target.value;render();});
+document.querySelectorAll("#dbgHealth button").forEach(b=>b.addEventListener("click",()=>{dbgStart();S.health=+b.dataset.h;render();say(HEALTH[S.health].line,2500);}));
+$("dbgPlus").addEventListener("click",()=>{dbgStart();ensureAudio();rep();});
+$("dbgCele").addEventListener("click",()=>{dbgStart();const a=Math.max(1,S.achieved);celebrate(a,STAGES.some(s=>s.at===a),S.health<3);});
+$("dbgRestore").addEventListener("click",()=>{if(backup){S=backup;backup=null;}render();say("元のデータに戻したよ",2000);});
+$("dbgSave").addEventListener("click",()=>{backup=null;save();render();say("この状態を保存したよ",2000);});
+(function buildDebug(){
+  let g=`<span></span>`+HEALTH.slice().reverse().map(h=>`<span class="gh">${h.name}</span>`).join("");
+  STAGES.forEach((st,i)=>{g+=`<span class="gr">${st.name}</span>`+[3,2,1,0].map(h=>`<svg viewBox="0 10 200 185" role="img" aria-label="${st.name}・${HEALTH[h].name}">${petSVG(i,h)}</svg>`).join("");});
+  $("gallery").innerHTML=g;
+  $("itemList").innerHTML=Object.keys(ITEMS).map(Number).sort((x,y)=>x-y).map(k=>`<button data-a="${k}">${k}日：${ITEMS[k]}</button>`).join("");
+  document.querySelectorAll("#itemList button").forEach(b=>b.addEventListener("click",()=>{dbgStart();S.achieved=+b.dataset.a;render(S.achieved);}));
+})();
 function petHop(){const p=document.getElementById("petG");if(!p)return;const base=S.health<=1?"shiver":"idle";p.classList.remove("hop","idle","shiver");void p.getBBox();requestAnimationFrame(()=>{p.classList.add("hop");p.addEventListener("animationend",()=>{p.classList.remove("hop");p.classList.add(base);},{once:true});});}
 function heart(){const h=document.createElement("span");h.className="heart";h.textContent="♥";h.style.left=(42+Math.random()*16)+"%";h.style.top="55%";$("scene").appendChild(h);setTimeout(()=>h.remove(),1200);}
 function celebrate(a,stageUp,healed){
