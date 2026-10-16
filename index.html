@@ -10,17 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
 <style>
-/* Layout: one-screen nursery — pet stage in the middle, big rep counter under it, controls docked at the bottom. Single light look by choice. */
+/* Layout: one-screen pet room — cutaway room scene on top, today's 50-rep goal under it, week strip, controls docked at the bottom. Single light look by choice. */
 :root{
-  --bg:#E6F2EE;        /* pale mint nursery wall */
-  --floor:#CFE6DE;
-  --ink:#24363A;
-  --muted:#5D7275;
-  --card:#FFFFFF;
-  --coral:#FF6F86;     /* action / hearts */
-  --sun:#FFC24A;       /* progress */
-  --mochi:#FFEFE4;     /* pet body */
-  --mochi-edge:#F2CDB8;
+  --bg:#E6F2EE; --floor:#CFE6DE; --ink:#24363A; --muted:#5D7275; --card:#FFFFFF;
+  --coral:#FF6F86; --sun:#FFC24A; --mochi:#FFEFE4; --mochi-edge:#F2CDB8; --sick:#7D8FB3;
   --display:"Dela Gothic One","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   --body:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
   color-scheme:light;
@@ -30,40 +23,59 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   -webkit-tap-highlight-color:transparent;overflow-x:hidden}
 .app{max-width:440px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:14px 18px}
-header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0;letter-spacing:.02em}
-.stage-tag{font-weight:900;font-size:13px;background:var(--card);border-radius:999px;padding:4px 12px;color:var(--coral);white-space:nowrap}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.name{display:flex;align-items:baseline;gap:8px}
+h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+.tag{font-weight:900;font-size:12px;background:var(--card);border-radius:999px;padding:3px 10px;color:var(--coral);white-space:nowrap}
+.health{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;color:var(--muted)}
+.hearts{font-size:17px;letter-spacing:1px;color:var(--coral)}
+.hearts .off{color:#C9D6D2}
 
-.room{position:relative;flex:1;min-height:270px;display:grid;place-items:center;
-  background:radial-gradient(ellipse 70% 18% at 50% 88%,var(--floor) 0 60%,transparent 61%)}
-#pet{width:min(78vw,300px);height:min(78vw,300px);transform-origin:50% 92%}
-#pet.hop{animation:hop .45s cubic-bezier(.3,1.6,.5,1)}
-#pet.grow{animation:grow 1s ease}
-@keyframes hop{0%{transform:scale(1.12,.86)}45%{transform:translateY(-18px) scale(.94,1.08)}100%{transform:none}}
-@keyframes grow{0%{transform:scale(.6);filter:brightness(1.6)}60%{transform:scale(1.15)}100%{transform:none}}
-.idle{animation:breathe 3.2s ease-in-out infinite}
+.scene{position:relative;background:var(--card);border-radius:22px;padding:8px;box-shadow:0 3px 0 var(--floor)}
+#room{display:block;width:100%;height:auto}
+#room .pet{transform-box:fill-box;transform-origin:50% 100%}
+#room .pet.hop{animation:hop .45s cubic-bezier(.3,1.6,.5,1)}
+#room .pet.idle{animation:breathe 3.2s ease-in-out infinite}
+#room .pet.shiver{animation:shiver 1.6s ease-in-out infinite}
+@keyframes hop{0%{transform:scale(1.12,.86)}45%{transform:translateY(-14px) scale(.94,1.08)}100%{transform:none}}
 @keyframes breathe{50%{transform:scale(1.02,.98)}}
-.bubble{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--card);border-radius:16px;padding:8px 14px;font-weight:700;font-size:14px;white-space:nowrap;box-shadow:0 2px 0 var(--floor);transition:opacity .3s}
-.bubble::after{content:"";position:absolute;bottom:-7px;left:50%;margin-left:-7px;border:7px solid transparent;border-top-color:var(--card);border-bottom:0}
-.heart{position:absolute;font-size:22px;color:var(--coral);pointer-events:none;animation:float 1.1s ease-out forwards}
-@keyframes float{to{transform:translateY(-90px) scale(1.4);opacity:0}}
+@keyframes shiver{0%,100%{transform:translateX(0)}10%{transform:translateX(-1.5px)}20%{transform:translateX(1.5px)}30%{transform:none}}
+#room .new{animation:pop .9s ease}
+@keyframes pop{0%{opacity:0;transform:translateY(-10px)}60%{opacity:1;transform:translateY(2px)}100%{transform:none}}
+.bubble{position:absolute;top:12px;left:50%;transform:translateX(-50%);max-width:88%;background:var(--ink);color:#fff;border-radius:14px;padding:5px 12px;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s}
+.heart{position:absolute;font-size:20px;color:var(--coral);pointer-events:none;animation:float 1.1s ease-out forwards}
+@keyframes float{to{transform:translateY(-80px) scale(1.4);opacity:0}}
+.celebrate{position:absolute;inset:8px;border-radius:16px;background:rgba(255,255,255,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:16px;cursor:pointer}
+.celebrate b{font-family:var(--display);font-weight:400;font-size:30px;color:var(--coral)}
+.celebrate p{margin:0;font-weight:700;line-height:1.6}
+.celebrate small{color:var(--muted);font-weight:700}
 
-.count-row{display:flex;align-items:flex-end;justify-content:center;gap:6px;line-height:1}
-#count{font-family:var(--display);font-size:72px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.count-row span{font-weight:900;font-size:18px;padding-bottom:10px}
-.progress{display:flex;flex-direction:column;gap:6px}
-.bar{height:12px;border-radius:999px;background:var(--card);overflow:hidden}
+.goal{display:flex;flex-direction:column;gap:6px}
+.goal-row{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.goal-row .label{font-weight:900;font-size:13px;color:var(--muted);padding-bottom:8px}
+.nums{line-height:1;font-variant-numeric:tabular-nums}
+#count{font-family:var(--display);font-size:60px}
+.nums span{font-weight:900;font-size:18px;color:var(--muted)}
+.bar{height:14px;border-radius:999px;background:var(--card);overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--sun);border-radius:inherit;transition:width .4s}
-#next{font-size:13px;color:var(--muted);text-align:center;font-weight:700}
+.bar.done i{background:var(--coral)}
+#next{font-size:13px;color:var(--muted);font-weight:700}
+
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--muted)}
+.dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--card);font-size:12px;font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+.dot.ok{background:var(--coral);color:#fff}
+.dot.miss{background:#DCE3EC;color:var(--sick)}
+.dot.today{outline:2px solid var(--ink);outline-offset:1px}
 
 .dock{display:flex;flex-direction:column;gap:10px}
 .btn{font:inherit;font-weight:900;font-size:17px;border:0;border-radius:18px;padding:16px;background:var(--coral);color:#fff;box-shadow:0 4px 0 #D94C64;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #D94C64}
 .btn.ghost{background:var(--card);color:var(--ink);box-shadow:0 4px 0 var(--floor)}
-.btn:focus-visible,.small:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.btn:focus-visible,.small:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .status{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:16px;padding:10px 14px;font-size:13px;font-weight:700}
 .meter{width:10px;height:36px;border-radius:5px;background:var(--bg);position:relative;overflow:hidden;flex:none}
-.meter i{position:absolute;left:0;right:0;top:50%;height:0;background:var(--coral)}
+.meter i{position:absolute;left:0;right:0;top:18px;height:0;background:var(--coral)}
 .status p{margin:0;min-width:0}
 .notice{background:#FFF4D6;border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.6;margin:0}
 details{font-size:13px}
@@ -71,33 +83,39 @@ summary{cursor:pointer;color:var(--muted);font-weight:700;padding:4px 0}
 .settings{display:flex;flex-direction:column;gap:12px;padding-top:8px}
 .settings label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-weight:700}
 input[type=range]{flex:1;accent-color:var(--coral)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .small{font:inherit;font-weight:700;font-size:13px;border:0;border-radius:12px;padding:8px 12px;background:var(--card);color:var(--ink);cursor:pointer}
-.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-@media (prefers-reduced-motion:reduce){#pet,.idle,.heart{animation:none!important}}
+.hint{margin:0;color:var(--muted);line-height:1.6}
+@media (prefers-reduced-motion:reduce){#room .pet,#room .new,.heart{animation:none!important}}
 </style>
 
 <div class="app">
   <header>
-    <h1>もちまる</h1>
-    <span class="stage-tag" id="stageTag">たまご</span>
+    <div class="name"><h1>もちまる</h1><span class="tag" id="stageTag">たまご</span></div>
+    <div class="health"><span id="healthText">げんき</span><span class="hearts" id="hearts"></span></div>
   </header>
 
-  <div class="room" id="room">
-    <div class="bubble" id="bubble">スクワットでかえしてね</div>
-    <svg id="pet" class="idle" viewBox="0 0 200 200" role="img" aria-label="ペット"></svg>
+  <div class="scene" id="scene">
+    <svg id="room" viewBox="0 0 360 270" role="img" aria-label="もちまるのお部屋"></svg>
+    <div class="bubble" id="bubble"></div>
   </div>
 
-  <div class="count-row"><b id="count">0</b><span>回</span></div>
-  <div class="progress">
-    <div class="bar"><i id="barFill"></i></div>
-    <div id="next">あと5回でうまれるよ</div>
+  <div class="goal">
+    <div class="goal-row">
+      <span class="label">今日のスクワット</span>
+      <div class="nums"><b id="count">0</b><span> / 50回</span></div>
+    </div>
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div id="next"></div>
   </div>
+
+  <div class="week" id="week" aria-label="この7日間"></div>
 
   <div class="dock">
     <button class="btn" id="startBtn">スクワットをはじめる</button>
     <div class="status" id="status" hidden>
       <div class="meter"><i id="meterFill"></i></div>
-      <p id="statusText">スマホを胸の前で持って、しゃがんで立とう</p>
+      <p>スマホを胸の前で持って、しゃがんで立とう</p>
     </div>
     <p class="notice" id="notice" hidden></p>
     <button class="btn ghost" id="tapBtn" hidden>1回できた！（タップで数える）</button>
@@ -105,147 +123,242 @@ input[type=range]{flex:1;accent-color:var(--coral)}
       <summary>設定</summary>
       <div class="settings">
         <label for="sens">感度 <input type="range" id="sens" min="1" max="5" value="3"></label>
-        <div class="confirm" id="resetArea">
-          <button class="small" id="resetBtn">育成をリセット</button>
-        </div>
+        <p class="hint">1日50回で目標達成。達成するたびにもちまるが育ち、お部屋に家具が届きます。達成できなかった日が続くと、だんだん弱って病気になります。</p>
+        <div class="row"><button class="small" id="skipBtn">テスト：次の日にする</button></div>
+        <div class="row" id="resetArea"></div>
       </div>
     </details>
   </div>
 </div>
 
 <script>
-const STAGES=[
-  {at:0,  name:"たまご",    line:"スクワットでかえしてね"},
-  {at:5,  name:"あかちゃん", line:"うまれたよ！ぴよ！"},
-  {at:15, name:"こども",    line:"耳がはえたよ！"},
-  {at:30, name:"わんぱく",  line:"頭に芽が出た！"},
-  {at:60, name:"りっぱ",    line:"お花がさいた！"},
-  {at:100,name:"でんせつ",  line:"王さまになったよ！"}
+const GOAL=50;
+const STAGES=[{at:0,name:"たまご"},{at:1,name:"あかちゃん"},{at:3,name:"こども"},{at:7,name:"わんぱく"},{at:14,name:"りっぱ"},{at:30,name:"でんせつ"}];
+const ITEMS={1:"ふかふかラグ",2:"ペットベッド",3:"観葉植物",4:"窓",5:"かべの本だな",6:"ペンダントライト",7:"お部屋が広くなった",8:"かわいい壁紙",9:"かけ時計",10:"サイドテーブル",11:"つるす植物",12:"絵",13:"おもちゃのボール",14:"もっと広いお部屋とフローリング",15:"大きな本棚",16:"ひじかけいす",17:"シャンデリア",20:"だんろ",25:"金のトロフィー",30:"でんせつのお屋敷"};
+const HEALTH=[
+  {name:"びょうき",line:"ねつがある…50回で少し元気になれるかも"},
+  {name:"よわってる",line:"からだがだるい…いっしょにスクワットして…"},
+  {name:"ちょっとつかれ",line:"ちょっとつかれたかも。今日はがんばろ"},
+  {name:"げんき",line:"今日もいっしょにがんばろ！"}
 ];
-const CHEERS=["いいね！","もう1回！","その調子！","ぷにぷに〜","ナイス！","かっこいい！","足、つよい！"];
+const CHEERS=["いいね！","もう1回！","その調子！","ぷにぷに〜","ナイス！","足、つよい！"];
 const $=id=>document.getElementById(id);
-let total=0, session=0;
+const pad=n=>String(n).padStart(2,"0");
+const keyOf=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const dateOf=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d);};
 
-function load(){try{const v=parseInt(localStorage.getItem("mochimaru-total"),10);if(v>0)total=v;}catch(e){}}
-function save(){try{localStorage.setItem("mochimaru-total",String(total));}catch(e){}}
-function stageOf(n){let s=0;STAGES.forEach((st,i)=>{if(n>=st.at)s=i});return s;}
+let S={achieved:0,health:3,days:{},last:null,offset:0};
+function todayDate(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+S.offset);return d;}
+const todayKey=()=>keyOf(todayDate());
+function load(){try{const v=JSON.parse(localStorage.getItem("mochimaru-v2"));if(v&&typeof v==="object")S=Object.assign(S,v);}catch(e){}}
+function save(){try{localStorage.setItem("mochimaru-v2",JSON.stringify(S));}catch(e){}}
 
-function petSVG(s){
+/* days that ended below the goal (including days the game was not opened) cost one heart each */
+function rollover(){
+  const t=todayKey();
+  if(!S.last){S.last=t;save();return 0;}
+  if(S.last===t)return 0;
+  const d=dateOf(S.last),end=todayDate();let missed=0,n=0;
+  while(d<end&&n<120){if((S.days[keyOf(d)]||0)<GOAL){S.health=Math.max(0,S.health-1);missed++;}d.setDate(d.getDate()+1);n++;}
+  S.last=t;
+  const keep=new Date(end);keep.setDate(keep.getDate()-40);
+  Object.keys(S.days).forEach(k=>{if(dateOf(k)<keep)delete S.days[k];});
+  save();return missed;
+}
+const stageOf=n=>{let s=0;STAGES.forEach((st,i)=>{if(n>=st.at)s=i});return s;};
+
+/* ---------- pet ---------- */
+function petSVG(s,h){
+  const body=h>=2?"var(--mochi)":h===1?"#F7EAE4":"#ECE7F0";
+  const edge=h>=1?"var(--mochi-edge)":"#C9C2D8";
   if(s===0){
-    return `<ellipse cx="100" cy="182" rx="46" ry="7" fill="#BFDCD2"/>
-    <path d="M100 52c30 0 50 44 50 80s-22 48-50 48-50-12-50-48 20-80 50-80z" fill="#FFF8F0" stroke="var(--mochi-edge)" stroke-width="3"/>
+    let x=`<ellipse cx="100" cy="186" rx="46" ry="7" fill="#000" opacity=".08"/>
+    <path d="M100 52c30 0 50 44 50 80s-22 48-50 48-50-12-50-48 20-80 50-80z" fill="${h>=1?"#FFF8F0":"#EEEAF3"}" stroke="${edge}" stroke-width="3"/>
     <circle cx="82" cy="108" r="8" fill="#FFD3C2"/><circle cx="116" cy="88" r="6" fill="#FFE29A"/><circle cx="120" cy="140" r="10" fill="#FFD3C2"/><circle cx="84" cy="152" r="5" fill="#FFE29A"/>`;
+    if(h<=1)x+=`<path d="M70 100 l12 8 -6 10 12 6" stroke="${edge}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+    if(h===0)x+=`<rect x="104" y="64" width="34" height="12" rx="4" fill="#fff" stroke="#E4D9D2" stroke-width="2" transform="rotate(25 121 70)"/>`;
+    return x;
   }
-  const r=[0,40,52,62,70,78][s];
-  const cy=180-r*0.85, rx=r*1.12;
+  const r=[0,40,52,62,70,78][s], cy=180-r*0.85, rx=r*1.12, top=cy-r*0.88;
   let back="",front="";
-  if(s>=2){ // ears
-    back+=`<ellipse cx="${100-r*0.62}" cy="${cy-r*0.7}" rx="${r*0.22}" ry="${r*0.34}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3" transform="rotate(-20 ${100-r*0.62} ${cy-r*0.7})"/>
-           <ellipse cx="${100+r*0.62}" cy="${cy-r*0.7}" rx="${r*0.22}" ry="${r*0.34}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3" transform="rotate(20 ${100+r*0.62} ${cy-r*0.7})"/>`;
-  }
-  if(s>=3){ // tail
-    back+=`<circle cx="${100+rx*0.95}" cy="${cy+r*0.45}" r="${r*0.2}" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3"/>`;
-  }
-  const top=cy-r*0.88;
-  if(s===1){ // shell hat
-    front+=`<path d="M${100-r*0.45} ${top+6} l${r*0.15} -14 l${r*0.15} 10 l${r*0.15} -12 l${r*0.15} 12 l${r*0.15} -14 l${r*0.15} 16 z" fill="#FFF8F0" stroke="var(--mochi-edge)" stroke-width="3" stroke-linejoin="round"/>`;
-  }
-  if(s===3){ // sprout
-    front+=`<path d="M100 ${top+4} v-16" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/>
-            <path d="M100 ${top-10} c-14 -10 -24 -2 -24 -2 c8 10 24 2 24 2z M100 ${top-10} c14 -10 24 -2 24 -2 c-8 10 -24 2 -24 2z" fill="#7CC795"/>`;
-  }
-  if(s===4){ // flower
-    front+=`<path d="M100 ${top+4} v-14" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/>`;
-    for(let i=0;i<5;i++){const a=i*72*Math.PI/180;front+=`<circle cx="${100+Math.cos(a)*9}" cy="${top-18+Math.sin(a)*9}" r="7" fill="var(--coral)"/>`;}
-    front+=`<circle cx="100" cy="${top-18}" r="6" fill="var(--sun)"/>`;
-  }
-  if(s===5){ // crown + sparkles
-    front+=`<path d="M${100-24} ${top+6} l-4 -26 l14 12 l14 -20 l14 20 l14 -12 l-4 26 z" fill="var(--sun)" stroke="#E0A11F" stroke-width="3" stroke-linejoin="round"/>
-            <circle cx="100" cy="${top-6}" r="4" fill="var(--coral)"/>`;
-    [[30,60],[172,74],[24,140],[178,150]].forEach(([x,y])=>{front+=`<path d="M${x} ${y-9} L${x+3} ${y-3} L${x+9} ${y} L${x+3} ${y+3} L${x} ${y+9} L${x-3} ${y+3} L${x-9} ${y} L${x-3} ${y-3}Z" fill="var(--sun)"/>`;});
-  }
-  const eyeY=cy-r*0.1, eyeDX=r*0.36, er=Math.max(4,r*0.09);
-  const feet = s>=2 ? `<ellipse cx="${100-r*0.45}" cy="${cy+r*0.86}" rx="${r*0.24}" ry="${r*0.12}" fill="var(--mochi-edge)"/><ellipse cx="${100+r*0.45}" cy="${cy+r*0.86}" rx="${r*0.24}" ry="${r*0.12}" fill="var(--mochi-edge)"/>` : "";
-  return `<ellipse cx="100" cy="186" rx="${rx*0.9}" ry="7" fill="#BFDCD2"/>
-  ${back}${feet}
-  <path d="M${100-rx} ${cy+r*0.3} C${100-rx} ${cy-r*1.05} ${100+rx} ${cy-r*1.05} ${100+rx} ${cy+r*0.3} C${100+rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.3}Z" fill="var(--mochi)" stroke="var(--mochi-edge)" stroke-width="3"/>
-  <circle cx="${100-eyeDX}" cy="${eyeY}" r="${er}" fill="var(--ink)"/><circle cx="${100+eyeDX}" cy="${eyeY}" r="${er}" fill="var(--ink)"/>
-  <circle cx="${100-eyeDX+er*0.35}" cy="${eyeY-er*0.35}" r="${er*0.35}" fill="#fff"/><circle cx="${100+eyeDX+er*0.35}" cy="${eyeY-er*0.35}" r="${er*0.35}" fill="#fff"/>
-  <ellipse cx="${100-eyeDX-r*0.12}" cy="${eyeY+r*0.22}" rx="${r*0.13}" ry="${r*0.07}" fill="#FFB3BF"/><ellipse cx="${100+eyeDX+r*0.12}" cy="${eyeY+r*0.22}" rx="${r*0.13}" ry="${r*0.07}" fill="#FFB3BF"/>
-  <path d="M${100-r*0.1} ${eyeY+r*0.16} q${r*0.1} ${r*0.12} ${r*0.2} 0" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>
-  ${front}`;
+  if(s>=2){[-1,1].forEach(k=>{back+=`<ellipse cx="${100+k*r*0.62}" cy="${cy-r*0.7}" rx="${r*0.22}" ry="${r*0.34}" fill="${body}" stroke="${edge}" stroke-width="3" transform="rotate(${k*(h===0?40:20)} ${100+k*r*0.62} ${cy-r*0.7})"/>`;});}
+  if(s>=3)back+=`<circle cx="${100+rx*0.95}" cy="${cy+r*0.45}" r="${r*0.2}" fill="${body}" stroke="${edge}" stroke-width="3"/>`;
+  if(s===1)front+=`<path d="M${100-r*0.45} ${top+6} l${r*0.15} -14 l${r*0.15} 10 l${r*0.15} -12 l${r*0.15} 12 l${r*0.15} -14 l${r*0.15} 16 z" fill="#FFF8F0" stroke="var(--mochi-edge)" stroke-width="3" stroke-linejoin="round"/>`;
+  if(s===3)front+=`<path d="M100 ${top+4} v-16" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/><path d="M100 ${top-10} c-14 -10 -24 -2 -24 -2 c8 10 24 2 24 2z M100 ${top-10} c14 -10 24 -2 24 -2 c-8 10 -24 2 -24 2z" fill="#7CC795"/>`;
+  if(s===4){front+=`<path d="M100 ${top+4} v-14" stroke="#5DAE7B" stroke-width="4" stroke-linecap="round"/>`;for(let i=0;i<5;i++){const a=i*72*Math.PI/180;front+=`<circle cx="${100+Math.cos(a)*9}" cy="${top-18+Math.sin(a)*9}" r="7" fill="var(--coral)"/>`;}front+=`<circle cx="100" cy="${top-18}" r="6" fill="var(--sun)"/>`;}
+  if(s===5)front+=`<path d="M76 ${top+6} l-4 -26 l14 12 l14 -20 l14 20 l14 -12 l-4 26 z" fill="var(--sun)" stroke="#E0A11F" stroke-width="3" stroke-linejoin="round"/><circle cx="100" cy="${top-6}" r="4" fill="var(--coral)"/>`;
+  const eyeY=cy-r*0.1, dx=r*0.36, er=Math.max(4,r*0.09);
+  let eyes;
+  if(h===3) eyes=[-1,1].map(k=>`<circle cx="${100+k*dx}" cy="${eyeY}" r="${er}" fill="var(--ink)"/><circle cx="${100+k*dx+er*0.35}" cy="${eyeY-er*0.35}" r="${er*0.35}" fill="#fff"/>`).join("");
+  else if(h===2) eyes=[-1,1].map(k=>`<circle cx="${100+k*dx}" cy="${eyeY+er*0.3}" r="${er*0.8}" fill="var(--ink)"/><path d="M${100+k*dx-er*1.2} ${eyeY-er*0.2} h${er*2.4}" stroke="${edge}" stroke-width="3" stroke-linecap="round"/>`).join("");
+  else if(h===1) eyes=[-1,1].map(k=>`<path d="M${100+k*dx-er} ${eyeY} q${er} ${er} ${er*2} 0" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>`).join("");
+  else eyes=[-1,1].map(k=>{const x=100+k*dx;return `<path d="M${x-k*er} ${eyeY-er*0.7} L${x+k*er} ${eyeY} L${x-k*er} ${eyeY+er*0.7}" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;}).join("");
+  const mouth=h>=2?`<path d="M${100-r*0.1} ${eyeY+r*0.16} q${r*0.1} ${r*0.12} ${r*0.2} 0" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>`
+                  :`<path d="M${100-r*0.1} ${eyeY+r*0.24} q${r*0.1} ${-r*0.1} ${r*0.2} 0" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const blush=h>=1?[-1,1].map(k=>`<ellipse cx="${100+k*(dx+r*0.12)}" cy="${eyeY+r*0.22}" rx="${r*0.13}" ry="${r*0.07}" fill="${h>=2?"#FFB3BF":"#F2C9CF"}"/>`).join(""):"";
+  let extra="";
+  if(h===2) extra+=`<path d="M${100+rx*0.85} ${cy-r*0.5} q6 10 0 14 q-6 -4 0 -14z" fill="#9FD3F0"/>`;
+  if(h<=1) extra+=[0,1,2].map(i=>`<path d="M${100-r*0.25+i*r*0.25} ${cy-r*0.62} v${r*0.14}" stroke="var(--sick)" stroke-width="2.5" stroke-linecap="round" opacity=".7"/>`).join("");
+  if(h===0) extra+=`<rect x="${100-r*0.55}" y="${top-4}" width="${r*1.1}" height="${r*0.28}" rx="6" fill="#BFE1F7" stroke="#8EC3E6" stroke-width="2"/>
+    <path d="M${100+r*0.08} ${eyeY+r*0.2} l${r*0.5} ${r*0.18}" stroke="#fff" stroke-width="6" stroke-linecap="round"/><path d="M${100+r*0.08} ${eyeY+r*0.2} l${r*0.5} ${r*0.18}" stroke="#E2E8EE" stroke-width="3" stroke-linecap="round"/><circle cx="${100+r*0.58}" cy="${eyeY+r*0.38}" r="3.5" fill="var(--coral)"/>
+    <text x="${100+rx}" y="${top-6}" font-size="18" font-weight="900" fill="var(--sick)" font-family="var(--body)">z</text><text x="${100+rx+12}" y="${top-20}" font-size="13" font-weight="900" fill="var(--sick)" font-family="var(--body)">z</text>`;
+  const feet=s>=2?[-1,1].map(k=>`<ellipse cx="${100+k*r*0.45}" cy="${cy+r*0.86}" rx="${r*0.24}" ry="${r*0.12}" fill="${edge}"/>`).join(""):"";
+  return `<ellipse cx="100" cy="186" rx="${rx*0.9}" ry="7" fill="#000" opacity=".08"/>${back}${feet}
+  <path d="M${100-rx} ${cy+r*0.3} C${100-rx} ${cy-r*1.05} ${100+rx} ${cy-r*1.05} ${100+rx} ${cy+r*0.3} C${100+rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.95} ${100-rx} ${cy+r*0.3}Z" fill="${body}" stroke="${edge}" stroke-width="3"/>
+  ${eyes}${blush}${mouth}${front}${extra}`;
 }
 
-let shownStage=-1, bubbleTimer;
-function say(t,ms){const b=$("bubble");b.textContent=t;b.style.opacity=1;clearTimeout(bubbleTimer);if(ms)bubbleTimer=setTimeout(()=>b.style.opacity=0,ms);}
-function render(){
-  const s=stageOf(total);
-  $("count").textContent=total;
-  $("stageTag").textContent=STAGES[s].name;
-  if(s!==shownStage){$("pet").innerHTML=petSVG(s);if(shownStage>=0){bump("grow");say(STAGES[s].line,2600);}shownStage=s;}
-  const nx=STAGES[s+1];
-  if(nx){const p=(total-STAGES[s].at)/(nx.at-STAGES[s].at);$("barFill").style.width=(p*100)+"%";
-    const left=nx.at-total;$("next").textContent=s===0?`あと${left}回でうまれるよ`:`あと${left}回で「${nx.name}」に成長`;}
-  else{$("barFill").style.width="100%";$("next").textContent=`でんせつ達成！ 今回 ${session}回`;}
+/* ---------- room: grows with achieved days ---------- */
+function roomSVG(a,h,fresh){
+  const L=a>=14?10:a>=7?40:70, R=a>=14?350:a>=7?320:290, W=R-L;
+  const g=(n,svg)=>a>=n?`<g class="${fresh===n?"new":""}">${svg}</g>`:"";
+  const bare=a<8;
+  let s=`<defs>
+    <pattern id="wp" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#FDF1F3"/><rect width="8" height="16" fill="#FBE4E9"/><circle cx="12" cy="8" r="1.6" fill="#FFC9D3"/></pattern>
+    <pattern id="wood" width="40" height="12" patternUnits="userSpaceOnUse"><rect width="40" height="12" fill="#E7C69C"/><path d="M0 11.5H40M26 0V12" stroke="#D2AE80" stroke-width="1"/></pattern>
+  </defs>`;
+  // wall + floor
+  s+=`<rect x="${L}" y="12" width="${W}" height="200" fill="${bare?"#EFEAE5":"url(#wp)"}"/>`;
+  if(a<4) s+=`<path d="M${L+30} 60 l8 14 -5 10 9 16" stroke="#D8D0C8" stroke-width="1.5" fill="none"/>`;
+  s+=`<rect x="${L}" y="212" width="${W}" height="46" fill="${a>=14?"url(#wood)":"#D9D3CC"}"/>
+      <rect x="${L}" y="206" width="${W}" height="6" fill="${a>=30?"#E5B542":"#E2D9CF"}"/>`;
+  if(a>=30) s+=`<rect x="${L}" y="12" width="${W}" height="7" fill="#E5B542"/>`;
+  // wall things
+  s+=g(4,`<rect x="95" y="50" width="62" height="58" rx="4" fill="${a>=30?"#E5B542":"#fff"}"/><rect x="100" y="55" width="52" height="48" fill="#BFE3F5"/>
+     <ellipse cx="118" cy="72" rx="11" ry="6" fill="#fff"/><path d="M126 55V103M100 79H152" stroke="${a>=30?"#E5B542":"#fff"}" stroke-width="3"/>
+     <path d="M98 52 q8 30 0 58" fill="none" stroke="var(--coral)" stroke-width="6" stroke-linecap="round"/><path d="M154 52 q-8 30 0 58" fill="none" stroke="var(--coral)" stroke-width="6" stroke-linecap="round"/>`);
+  s+=g(12,`<rect x="50" y="58" width="36" height="44" rx="2" fill="#B98552"/><rect x="54" y="62" width="28" height="36" fill="#FFF7E8"/><circle cx="63" cy="74" r="6" fill="var(--sun)"/><path d="M54 98 l10 -14 8 9 10 -12 V98Z" fill="#7CC795"/>`);
+  s+=g(9,`<circle cx="298" cy="66" r="14" fill="#fff" stroke="var(--ink)" stroke-width="3"/><path d="M298 66V57M298 66l6 4" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round"/>`);
+  s+=g(5,`<rect x="198" y="104" width="72" height="5" rx="2" fill="#B98552"/>
+     <rect x="203" y="82" width="8" height="22" fill="#7FB3D5"/><rect x="212" y="86" width="7" height="18" fill="var(--coral)"/><rect x="220" y="80" width="9" height="24" fill="var(--sun)"/><rect x="230" y="90" width="22" height="7" fill="#7CC795" transform="rotate(-8 241 93)"/>`);
+  s+=g(25,`<path d="M254 86 h14 q0 12 -7 14 q-7 -2 -7 -14z" fill="#F2C14E" stroke="#D29E2A" stroke-width="2"/><rect x="258" y="99" width="6" height="5" fill="#D29E2A"/>`);
+  s+=g(11,`<path d="M62 12V34" stroke="#8B6A4E" stroke-width="1.5"/><path d="M53 34h18l-3 11h-12z" fill="#D9895F"/><path d="M55 44 q-6 14 -2 24 M62 45 q0 14 3 22 M69 44 q6 12 3 20" stroke="#5DAE7B" stroke-width="3" fill="none" stroke-linecap="round"/>`);
+  // ceiling light
+  if(a>=17) s+=g(17,`<path d="M180 12V30" stroke="#C9A23D" stroke-width="2"/><path d="M156 38 q24 14 48 0" stroke="#E5B542" stroke-width="4" fill="none"/><path d="M168 30h24" stroke="#E5B542" stroke-width="4"/>
+     ${[156,168,180,192,204].map(x=>`<rect x="${x-2}" y="${x===180?28:36}" width="4" height="8" fill="#fff"/><ellipse cx="${x}" cy="${x===180?25:33}" rx="3" ry="5" fill="var(--sun)"/>`).join("")}<circle cx="180" cy="42" r="30" fill="var(--sun)" opacity=".12"/>`);
+  else if(a>=6) s+=g(6,`<path d="M180 12V30" stroke="var(--ink)" stroke-width="1.5"/><path d="M166 44 l6 -14 h16 l6 14z" fill="var(--sun)"/><circle cx="180" cy="50" r="26" fill="var(--sun)" opacity=".15"/>`);
+  else s+=`<path d="M180 12V40" stroke="var(--ink)" stroke-width="1.5"/><circle cx="180" cy="46" r="6" fill="#FFF3C4" stroke="#E8D9A0" stroke-width="1.5"/>`;
+  // fireplace behind pet
+  s+=g(20,`<rect x="142" y="150" width="76" height="62" fill="#C8644E"/><rect x="138" y="144" width="84" height="8" rx="2" fill="#8E4A3A"/>
+     <path d="M156 212 v-30 q24 -18 48 0 v30z" fill="#3A2A2A"/><path d="M172 212 q-4 -14 8 -24 q2 10 8 12 q4 -6 2 -12 q10 10 2 24z" fill="#FFA43A"/>`);
+  // floor things
+  s+=g(1,`<ellipse cx="180" cy="236" rx="80" ry="13" fill="${a>=30?"#C9364E":"#F7B2BE"}"/><ellipse cx="180" cy="236" rx="66" ry="9" fill="none" stroke="${a>=30?"#E5B542":"#fff"}" stroke-width="2" stroke-dasharray="4 4"/>`);
+  s+=g(15,`<rect x="302" y="128" width="42" height="112" fill="#B98552"/>${[0,1,2].map(i=>`<rect x="306" y="${134+i*35}" width="34" height="29" fill="#8E623A"/><rect x="308" y="${140+i*35}" width="7" height="23" fill="${["#7FB3D5","var(--coral)","#7CC795"][i]}"/><rect x="316" y="${143+i*35}" width="6" height="20" fill="var(--sun)"/><rect x="323" y="${139+i*35}" width="8" height="24" fill="${["var(--coral)","#7CC795","#7FB3D5"][i]}"/>`).join("")}`);
+  s+=g(16,`<rect x="14" y="196" width="54" height="40" rx="10" fill="#5FB3A8"/><rect x="20" y="182" width="42" height="30" rx="10" fill="#6FC4B8"/><rect x="12" y="204" width="12" height="30" rx="6" fill="#4E9E94"/><rect x="58" y="204" width="12" height="30" rx="6" fill="#4E9E94"/>`);
+  s+=g(10,`<rect x="72" y="208" width="46" height="6" rx="2" fill="#B98552"/><path d="M78 214V242M112 214V242" stroke="#8E623A" stroke-width="4"/><rect x="88" y="196" width="12" height="12" rx="2" fill="#fff" stroke="var(--ink)" stroke-width="1.5"/><path d="M100 199 q6 3 0 6" stroke="var(--ink)" stroke-width="1.5" fill="none"/>`);
+  s+=g(3,`<path d="M272 206 q-18 -16 -10 -34 q8 12 10 22 q0 -24 12 -32 q4 20 -6 36 q14 -14 22 -12 q-6 16 -22 22z" fill="#6DBB86"/><path d="M262 208h24l-4 30h-16z" fill="#E09A6A"/>`);
+  s+=g(13,`<circle cx="246" cy="240" r="8" fill="var(--coral)"/><path d="M238 240h16" stroke="#fff" stroke-width="3"/>`);
+  s+=g(2,`<ellipse cx="180" cy="238" rx="54" ry="11" fill="#8EC6D8"/><ellipse cx="180" cy="234" rx="44" ry="7" fill="#B5DCE8"/>`);
+  // pet
+  const st=stageOf(a);
+  s+=`<g transform="translate(125 134) scale(.55)"><g class="pet ${h<=1?"shiver":"idle"}" id="petG">${petSVG(st,h)}</g></g>`;
+  // sick tint
+  if(h<3) s+=`<rect x="${L}" y="12" width="${W}" height="246" fill="var(--sick)" opacity="${[0.22,0.14,0.06][h]}" pointer-events="none"/>`;
+  s+=`<rect x="${L}" y="12" width="${W}" height="246" fill="none" stroke="var(--ink)" stroke-width="3" rx="4"/>`;
+  return s;
 }
-function bump(cls){const p=$("pet");p.classList.remove("hop","grow","idle");void p.offsetWidth;p.classList.add(cls);
-  p.addEventListener("animationend",()=>{p.classList.remove(cls);p.classList.add("idle");},{once:true});}
-function heart(){const h=document.createElement("span");h.className="heart";h.textContent="♥";
-  h.style.left=(40+Math.random()*20)+"%";h.style.top="45%";$("room").appendChild(h);setTimeout(()=>h.remove(),1200);}
+
+/* ---------- UI ---------- */
+let bubbleTimer;
+function say(t,ms){const b=$("bubble");b.textContent=t;b.style.opacity=1;clearTimeout(bubbleTimer);if(ms)bubbleTimer=setTimeout(()=>{b.style.opacity=0},ms);}
+function nextItem(a){const ks=Object.keys(ITEMS).map(Number).sort((x,y)=>x-y);return ks.find(k=>k>a);}
+function render(fresh){
+  const tk=todayKey(), c=S.days[tk]||0, a=S.achieved, h=S.health;
+  $("room").innerHTML=roomSVG(a,h,fresh);
+  $("stageTag").textContent=STAGES[stageOf(a)].name;
+  $("healthText").textContent=HEALTH[h].name;
+  $("hearts").innerHTML=[0,1,2].map(i=>`<span class="${i<h?"":"off"}">♥</span>`).join("");
+  $("count").textContent=c;
+  $("barFill").style.width=Math.min(100,c/GOAL*100)+"%";
+  $("bar").classList.toggle("done",c>=GOAL);
+  const nk=nextItem(a);
+  if(c>=GOAL) $("next").textContent=`今日は達成！ 達成 ${a}日目。${nk?`あと${nk-a}日達成で「${ITEMS[nk]}」`:"お屋敷は完成しました"}`;
+  else $("next").textContent=`あと${GOAL-c}回で今日の目標達成。${nk===a+1?`「${ITEMS[nk]}」が届くよ`:nk?`次の家具まであと${nk-a}日`:""}`;
+  // week strip
+  const wd="日月火水木金土";let w="";
+  for(let i=6;i>=0;i--){const d=todayDate();d.setDate(d.getDate()-i);const k=keyOf(d),n=S.days[k]||0;
+    const cls=n>=GOAL?"ok":(i>0&&S.last&&dateOf(k)>=dateOf(S.firstDay||k)?"miss":"");
+    w+=`<div class="day"><span class="dot ${cls} ${i===0?"today":""}">${n>=GOAL?"✓":n||""}</span>${i===0?"今日":wd[d.getDay()]}</div>`;}
+  $("week").innerHTML=w;
+}
+function petHop(){const p=document.getElementById("petG");if(!p)return;const base=S.health<=1?"shiver":"idle";p.classList.remove("hop","idle","shiver");void p.getBBox();requestAnimationFrame(()=>{p.classList.add("hop");p.addEventListener("animationend",()=>{p.classList.remove("hop");p.classList.add(base);},{once:true});});}
+function heart(){const h=document.createElement("span");h.className="heart";h.textContent="♥";h.style.left=(42+Math.random()*16)+"%";h.style.top="55%";$("scene").appendChild(h);setTimeout(()=>h.remove(),1200);}
+function celebrate(a,stageUp,healed){
+  const el=document.createElement("div");el.className="celebrate";
+  const item=ITEMS[a];
+  el.innerHTML=`<b>目標達成！</b><p>${stageUp?`もちまるが「${STAGES[stageOf(a)].name}」に成長した！<br>`:""}${item?`${item}${a===7||a===14?"！":"が届いたよ！"}`:"もちまるが大よろこび！"}${healed?`<br>少し元気になった`:""}</p><small>タップでとじる</small>`;
+  el.onclick=()=>el.remove();$("scene").appendChild(el);setTimeout(()=>el.remove(),5000);
+}
 
 let actx;
-function beep(f){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=f;
-  g.gain.setValueAtTime(.15,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+.18);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+.2);}catch(e){}}
+function beep(f,len){try{if(!actx)return;const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.15,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+(len||.18));o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+(len||.18)+.02);}catch(e){}}
 
 function rep(){
-  const before=stageOf(total);total++;session++;save();
-  bump("hop");heart();
-  if(stageOf(total)===before)say(CHEERS[Math.floor(Math.random()*CHEERS.length)],1200);
-  beep(stageOf(total)!==before?880:620);
-  try{navigator.vibrate&&navigator.vibrate(40);}catch(e){}
-  render();
+  if(rollover())render();
+  const tk=todayKey(), before=S.days[tk]||0;
+  S.days[tk]=before+1;
+  if(before+1===GOAL){
+    const st=stageOf(S.achieved), wasH=S.health;
+    S.achieved++; S.health=Math.min(3,S.health+1); save();
+    render(S.achieved);
+    celebrate(S.achieved,stageOf(S.achieved)!==st,S.health>wasH);
+    [660,880,1100].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+  }else{
+    save();render();
+    say(before+1>GOAL?"ボーナス！":(GOAL-before-1===10?"あと10回！":CHEERS[Math.floor(Math.random()*CHEERS.length)]),1200);
+    beep(620);
+  }
+  petHop();heart();
+  try{navigator.vibrate&&navigator.vibrate(before+1===GOAL?[60,60,120]:40);}catch(e){}
 }
 
-/* --- squat detection: one rep = a push phase (pos accel) followed by a lift-off/settle phase (neg accel) --- */
+/* ---------- squat detection: a push phase (+) followed by a settle phase (−) is one rep ---------- */
 const TH=[0,2.2,1.8,1.4,1.1,0.8];
-let base=null,f=0,phase=0,posStart=0,lastRep=0,gotMotion=false,running=false;
+let base=null,f=0,phase=0,posStart=0,lastRep=0,gotMotion=false;
 function onMotion(e){
-  const a=e.accelerationIncludingGravity; if(!a||a.x==null)return;
-  gotMotion=true;
-  const m=Math.hypot(a.x,a.y,a.z);
-  if(base===null)base=m;
-  base+=(m-base)*0.01; const d=m-base; f+=(d-f)*0.25;
-  const T=TH[+$("sens").value], now=performance.now();
-  if(f>T){ if(phase!==1){phase=1;posStart=now;} }
-  else if(f<-T*0.8){ if(phase===1&&now-posStart>120&&now-lastRep>900){lastRep=now;rep();} phase=-1; }
-  const mf=$("meterFill"),h=Math.min(18,Math.abs(f)/T*12);
-  mf.style.height=h+"px";mf.style.top=f>0?(18-h)+"px":"18px";
+  const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;gotMotion=true;
+  const m=Math.hypot(a.x,a.y,a.z);if(base===null)base=m;
+  base+=(m-base)*0.01;f+=((m-base)-f)*0.25;
+  const T=TH[+$("sens").value],now=performance.now();
+  if(f>T){if(phase!==1){phase=1;posStart=now;}}
+  else if(f<-T*0.8){if(phase===1&&now-posStart>120&&now-lastRep>900){lastRep=now;rep();}phase=-1;}
+  const mf=$("meterFill"),hh=Math.min(18,Math.abs(f)/T*12);mf.style.height=hh+"px";mf.style.top=(f>0?18-hh:18)+"px";
 }
-
+function ensureAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
 async function start(){
-  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
-    const r=await DeviceMotionEvent.requestPermission(); if(r!=="granted")throw new Error("denied");}}catch(e){}
+  ensureAudio();
+  try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission();}catch(e){}
   try{await navigator.wakeLock?.request("screen");}catch(e){}
   window.addEventListener("devicemotion",onMotion);
-  running=true;$("startBtn").hidden=true;$("status").hidden=false;
-  say(total<5?"しゃがんで、立って！":"いっしょにがんばろ！",2000);
-  setTimeout(()=>{if(!gotMotion){
-    $("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
-    $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをブラウザ（Safari や Chrome）で直接開いてください。";
-  }},1800);
+  $("startBtn").hidden=true;$("status").hidden=false;
+  say("しゃがんで、立って！",2000);
+  setTimeout(()=>{if(!gotMotion){$("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
+    $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをSafariやChromeで直接開いてください。";}},1800);
 }
 $("startBtn").addEventListener("click",start);
-$("tapBtn").addEventListener("click",()=>{if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}rep();});
+$("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
+$("skipBtn").addEventListener("click",()=>{S.offset++;const m=rollover();render();say(m?`目標に届かなかった…（${HEALTH[S.health].name}）`:HEALTH[S.health].line,2600);});
 
-function restoreReset(){$("resetArea").innerHTML=`<button class="small" id="resetBtn">育成をリセット</button>`;bindReset();}
+function bindReset(){
+  $("resetArea").innerHTML=`<button class="small" id="resetBtn">育成をリセット</button>`;
+  $("resetBtn").onclick=()=>{
+    $("resetArea").innerHTML=`<span>たまごと何もないお部屋に戻す？</span><button class="small" id="yes">リセットする</button><button class="small" id="no">やめる</button>`;
+    $("yes").onclick=()=>{S={achieved:0,health:3,days:{},last:todayKeyFresh(),offset:0,firstDay:todayKeyFresh()};save();render();say(HEALTH[3].line);bindReset();};
+    $("no").onclick=bindReset;
+  };
+}
+function todayKeyFresh(){const d=new Date();return keyOf(d);}
 bindReset();
-function bindReset(){$("resetBtn").onclick=()=>{const area=$("resetArea");area.innerHTML=`<span>本当にたまごに戻す？</span><button class="small" id="yes">リセットする</button><button class="small" id="no">やめる</button>`;
-  $("yes").onclick=()=>{total=0;session=0;save();shownStage=-1;render();say(STAGES[0].line);restoreReset();};$("no").onclick=restoreReset;};}
+setInterval(()=>{if(rollover())render();},60000);
 
-function boot(data){ if(data&&data.total>=0){total=data.total;session=data.session||0;} else load(); render(); }
-window.claude?.hot?.snapshot?.(()=>({total,session}));
-window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? null);
+function boot(data){
+  if(data&&data.S)S=data.S;else load();
+  if(!S.firstDay)S.firstDay=S.last||todayKey();
+  const missed=rollover();render();
+  say(missed?`${missed}日、目標に届かなかった…（${HEALTH[S.health].name}）`:HEALTH[S.health].line,3500);
+}
+window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.ready?window.claude.hot.ready(boot):boot(window.claude?.hot?.data??null);
 </script>
 
 </body>
