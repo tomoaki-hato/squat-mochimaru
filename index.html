@@ -131,6 +131,7 @@ input[type=range]{flex:1;accent-color:var(--coral)}
     </div>
     <p class="notice" id="notice" hidden></p>
     <button class="btn ghost" id="tapBtn" hidden>1回できた！（タップで数える）</button>
+    <button class="btn ghost" id="stopBtn" hidden>運動を終える</button>
     <details>
       <summary>設定</summary>
       <div class="settings">
@@ -371,7 +372,7 @@ function beep(f,len){try{if(!actx)return;const o=actx.createOscillator(),g=actx.
 
 let lastRepAt=0;
 function rep(){
-  lastRepAt=Date.now();
+  lastRepAt=Date.now();sessionReps++;
   if(rollover())render();
   const tk=todayKey(), before=S.days[tk]||0;
   S.days[tk]=before+1;
@@ -396,6 +397,7 @@ function rep(){
 /* ---------- squat detection: a push phase (+) followed by a settle phase (−) is one rep ---------- */
 const TH=[0,2.2,1.8,1.4,1.1,0.8];
 let base=null,f=0,phase=0,posStart=0,lastRep=0,gotMotion=false;
+let running=false,sessionReps=0,wake=null;
 function onMotion(e){
   const a=e.accelerationIncludingGravity;if(!a||a.x==null)return;gotMotion=true;
   const m=Math.hypot(a.x,a.y,a.z);if(base===null)base=m;
@@ -431,14 +433,29 @@ function ensureAudio(){try{actx=actx||new (window.AudioContext||window.webkitAud
 async function start(){
   ensureAudio();unlockVoice();
   try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission();}catch(e){}
-  try{await navigator.wakeLock?.request("screen");}catch(e){}
+  try{wake=await navigator.wakeLock?.request("screen");}catch(e){}
+  base=null;f=0;phase=0;sessionReps=0;running=true;
   window.addEventListener("devicemotion",onMotion);
-  $("startBtn").hidden=true;$("status").hidden=false;
+  $("startBtn").hidden=true;$("status").hidden=false;$("stopBtn").hidden=false;
   say("しゃがんで、立って！",2000);
-  setTimeout(()=>{if(!gotMotion){$("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
+  setTimeout(()=>{if(!gotMotion&&running){$("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
     $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをSafariやChromeで直接開いてください。";}},1800);
 }
 $("startBtn").addEventListener("click",start);
+function stop(){
+  running=false;
+  window.removeEventListener("devicemotion",onMotion);
+  try{wake?.release();}catch(e){}wake=null;
+  ["status","tapBtn","notice","stopBtn"].forEach(id=>$(id).hidden=true);
+  const b=$("startBtn");b.hidden=false;b.textContent="スクワットを再開する";
+  const c=S.days[todayKey()]||0,left=GOAL-c,n=sessionReps;
+  let text,speech;
+  if(n===0){text="今回は0回だったね。またあとでやろ！";speech="コンカイ。ゼロカイ。マタ。アトデ。";}
+  else if(left>0){text=`おつかれさま！今回${n}回。今日はあと${left}回だよ`;speech=`コンカイ。${n}カイ。ノコリ。${left}カイ。オツカレ。サマデス。`;}
+  else{text=`おつかれさま！今回${n}回。今日の目標は達成だよ`;speech=`コンカイ。${n}カイ。ホンジツ。ニンム。カンリョウ。オツカレ。サマデス。`;}
+  say(text,6000);speak(speech);lastRepAt=Date.now();
+}
+$("stopBtn").addEventListener("click",stop);
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
 $("voiceOn").checked=voiceOn;
 $("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)speak("イイ。チョウシ。デス。");});
