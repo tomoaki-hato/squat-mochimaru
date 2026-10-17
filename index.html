@@ -135,7 +135,7 @@ input[type=range]{flex:1;accent-color:var(--coral)}
       <summary>設定</summary>
       <div class="settings">
         <label for="sens">感度 <input type="range" id="sens" min="1" max="5" value="3"></label>
-        <p class="hint">1日50回で目標達成。達成するたびにもちまるが育ち、お部屋に家具が届きます。達成できなかった日が続くと、だんだん弱って病気になります。</p>
+        <p class="hint">1日50回で目標達成。1日の区切りは朝4時です。達成するたびにもちまるが育ち、お部屋に家具が届きます。達成できなかった日が続くと、だんだん弱って病気になります。</p>
         <div class="row"><button class="small" id="skipBtn">テスト：次の日にする</button></div>
         <div class="row" id="resetArea"></div>
       </div>
@@ -191,11 +191,12 @@ const keyOf=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const dateOf=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d);};
 
 let S={achieved:0,health:3,days:{},last:null,offset:0};
-function todayDate(){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+S.offset);return d;}
+const DAY_START_HOUR=4; // the day switches at 4:00 am
+function todayDate(){const d=new Date(Date.now()-DAY_START_HOUR*3600e3);d.setHours(0,0,0,0);d.setDate(d.getDate()+S.offset);return d;}
 const todayKey=()=>keyOf(todayDate());
-function load(){try{const v=JSON.parse(localStorage.getItem("mochimaru-v2"));if(v&&typeof v==="object")S=Object.assign(S,v);}catch(e){}}
+function load(){try{const v=JSON.parse(localStorage.getItem("mochimaru-v3"));if(v&&typeof v==="object")S=Object.assign(S,v);}catch(e){}}
 let backup=null; // set while the debug panel is previewing
-function save(){if(backup)return;try{localStorage.setItem("mochimaru-v2",JSON.stringify(S));}catch(e){}}
+function save(){if(backup)return;try{localStorage.setItem("mochimaru-v3",JSON.stringify(S));}catch(e){}}
 
 /* days that ended below the goal (including days the game was not opened) cost one heart each */
 function rollover(){
@@ -421,7 +422,7 @@ function bindReset(){
     $("no").onclick=bindReset;
   };
 }
-function todayKeyFresh(){const d=new Date();return keyOf(d);}
+function todayKeyFresh(){const d=new Date(Date.now()-DAY_START_HOUR*3600e3);return keyOf(d);}
 bindReset();
 setInterval(()=>{if(rollover())render();},60000);
 
