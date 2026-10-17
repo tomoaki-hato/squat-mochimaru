@@ -96,7 +96,11 @@ h1{font-family:var(--display);font-weight:400;font-size:28px;margin:0;color:#fff
 .status{display:flex;align-items:center;gap:10px;background:var(--card);border:var(--line);border-radius:16px;padding:10px 14px;font-size:13px;font-weight:900}
 .meter{width:12px;height:36px;border-radius:6px;background:var(--soft);border:2px solid var(--ink);position:relative;overflow:hidden;flex:none}
 .meter i{position:absolute;left:0;right:0;top:16px;height:0;background:var(--coral)}
-.status p{margin:0;min-width:0}
+.status p{margin:0;min-width:0;flex:1}
+.run-row{display:flex;gap:10px}
+.run-row #stopBtn{flex:1;min-width:0}
+.bgm-q{flex:none;font-size:15px;padding:14px 16px;background:var(--sun);color:var(--ink);text-shadow:none}
+.bgm-q.off{background:var(--soft);color:var(--muted)}
 .notice{background:#FFF7CC;border:var(--line);border-radius:14px;padding:10px 14px;font-size:13px;line-height:1.6;margin:0;font-weight:700}
 details{font-size:13px;background:var(--card);border:var(--line);border-radius:18px;padding:6px 14px;box-shadow:0 3px 0 var(--ink)}
 details[open]{padding-bottom:14px}
@@ -157,7 +161,7 @@ select{font:inherit;font-weight:900;font-size:13px;border:2px solid var(--ink);b
     </div>
     <p class="notice" id="notice" hidden></p>
     <button class="btn ghost" id="tapBtn" hidden>1回できた！（タップで数える）</button>
-    <button class="btn ghost" id="stopBtn" hidden>運動を終える</button>
+    <div class="run-row" id="runRow" hidden><button class="btn ghost" id="stopBtn">運動を終える</button><button class="btn bgm-q" id="bgmQuick" aria-pressed="true">♪ BGM</button></div>
     <details>
       <summary>設定</summary>
       <div class="settings">
@@ -169,6 +173,8 @@ select{font:inherit;font-weight:900;font-size:13px;border:2px solid var(--ink);b
           <label for="vRate">速さ <input type="range" id="vRate" min="0.5" max="3" step="0.1" value="1.5"><output id="vRateOut" class="out">1.5倍</output></label>
           <div class="row"><button class="small" id="vTest">試し聞き</button></div>
         </div>
+        <label for="bgmOn">BGM（スクワット中に流す） <input type="checkbox" id="bgmOn" checked style="width:22px;height:22px;accent-color:var(--coral)"></label>
+        <label for="bgmVol">BGMの音量 <input type="range" id="bgmVol" min="0" max="1" step="0.05" value="0.5"><output id="bgmVolOut" class="out">50%</output></label>
         <p class="hint">1日50回で目標達成。1日の区切りは朝4時です。達成するたびにもちまるが育ち、お部屋に家具が届きます。達成できなかった日が続くと、だんだん弱って病気になります。</p>
         <div class="row"><button class="small" id="skipBtn">テスト：次の日にする</button></div>
         <div class="row" id="resetArea"></div>
@@ -491,27 +497,71 @@ function speak(text,vol){
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";
     const pick=VCFG.voice&&speechSynthesis.getVoices().find(v=>v.name===VCFG.voice);if(pick||jaVoice)u.voice=pick||jaVoice;
     u.pitch={robot:.1,cute:1.7,normal:1}[VCFG.style]??1;u.rate=VCFG.rate;u.volume=vol??1;
+    if(vol!==0)BGM.duck(1.2+text.length*.12/VCFG.rate);
     if(vol===0||VCFG.style!=="robot")speechSynthesis.speak(u);else{robotBlip();setTimeout(()=>{try{speechSynthesis.speak(u);}catch(e){}},220);}}catch(e){}
 }
 function unlockVoice(){speak("。",0);} // iPhone needs the first utterance inside a tap
 function ensureAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+/* ---------- BGM: an original 8-bar chiptune loop built with Web Audio (C–G–Am–F, 128 BPM) ---------- */
+let BGMCFG={on:true,vol:.5};
+try{Object.assign(BGMCFG,JSON.parse(localStorage.getItem("mochimaru-bgm"))||{});}catch(e){}
+function saveBGM(){try{localStorage.setItem("mochimaru-bgm",JSON.stringify(BGMCFG));}catch(e){}}
+const BGM=(()=>{
+  const BPM=128,S16=60/BPM/4,LOOP=16*8;
+  const MEL=[[76,0,79,0,84,0,79,81],[79,0,74,0,79,0,77,76],[76,0,72,0,76,0,79,0],[77,76,74,72,74,0,0,0],
+             [72,74,76,0,79,0,76,0],[74,76,79,0,83,0,81,79],[81,0,79,0,76,0,72,74],[77,0,76,0,74,0,71,0]];
+  const ROOT=[36,43,45,41],CH=[[60,64,67],[59,62,67],[57,60,64],[57,60,65]];
+  let master=null,timer=null,step=0,next=0,on=false,noise=null;
+  const hz=m=>440*Math.pow(2,(m-69)/12);
+  function tone(t,m,dur,type,gain,cut){const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=hz(m);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(gain,t+.006);g.gain.exponentialRampToValueAtTime(.0005,t+dur);
+    let n=o;if(cut){const f=actx.createBiquadFilter();f.type="lowpass";f.frequency.value=cut;o.connect(f);n=f;}n.connect(g).connect(master);o.start(t);o.stop(t+dur+.03);}
+  function kick(t){const o=actx.createOscillator(),g=actx.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(45,t+.12);
+    g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.connect(g).connect(master);o.start(t);o.stop(t+.2);}
+  function hiss(t,dur,gain,hp){if(!noise){noise=actx.createBuffer(1,actx.sampleRate*.3,actx.sampleRate);const d=noise.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+    const s=actx.createBufferSource(),f=actx.createBiquadFilter(),g=actx.createGain();s.buffer=noise;f.type="highpass";f.frequency.value=hp;
+    g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.001,t+dur);s.connect(f).connect(g).connect(master);s.start(t);s.stop(t+dur+.02);}
+  function play(st,t){const bar=Math.floor(st/16),i=st%16,c=bar%4;
+    if(i%2===0){const e=i/2,m=MEL[bar][e];if(m)tone(t,m,S16*1.9,"square",.06,3000);
+      tone(t,ROOT[c]+(e%4===2?12:e===7?7:0),S16*1.7,"triangle",.24);}
+    if(i%4===2)CH[c].forEach(n=>tone(t,n,S16*1.3,"square",.018,1600));
+    if(i===0||i===8||i===10)kick(t);
+    if(i===4||i===12)hiss(t,.13,.16,1400);
+    if(i%2===0)hiss(t,.035,.05,7000);}
+  function tick(){while(next<actx.currentTime+.12){play(step,next);next+=S16;step=(step+1)%LOOP;}}
+  function level(v,sec){if(!master)return;const g=master.gain,t=actx.currentTime;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.linearRampToValueAtTime(v,t+sec);}
+  return{
+    get playing(){return on;},
+    start(){if(on)return;ensureAudio();if(!actx)return;try{actx.resume?.();}catch(e){}
+      master=actx.createGain();master.gain.value=0;master.connect(actx.destination);level(BGMCFG.vol*.6,.8);
+      step=0;next=actx.currentTime+.08;timer=setInterval(tick,25);on=true;},
+    stop(){if(!on)return;on=false;clearInterval(timer);const m=master;level(0,.5);master=null;setTimeout(()=>{try{m.disconnect();}catch(e){}},700);},
+    duck(sec){if(!on)return;const g=master.gain,t=actx.currentTime,v=BGMCFG.vol*.6;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);
+      g.linearRampToValueAtTime(v*.25,t+.12);g.setValueAtTime(v*.25,t+sec);g.linearRampToValueAtTime(v,t+sec+.5);},
+    setVol(){if(on)level(BGMCFG.vol*.6,.2);}
+  };
+})();
+document.addEventListener("visibilitychange",()=>{if(document.hidden)BGM.stop();else if(running&&BGMCFG.on)BGM.start();});
+function syncBgmUI(){$("bgmOn").checked=BGMCFG.on;const q=$("bgmQuick");q.textContent=BGMCFG.on?"♪ BGM":"♪ オフ";q.setAttribute("aria-pressed",String(BGMCFG.on));q.classList.toggle("off",!BGMCFG.on);}
+function setBgm(on){BGMCFG.on=on;saveBGM();syncBgmUI();if(on&&running)BGM.start();else BGM.stop();}
 async function start(){
   ensureAudio();unlockVoice();
   try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission();}catch(e){}
   try{wake=await navigator.wakeLock?.request("screen");}catch(e){}
   base=null;f=0;phase=0;sessionReps=0;running=true;
   window.addEventListener("devicemotion",onMotion);
-  $("startBtn").hidden=true;$("status").hidden=false;$("stopBtn").hidden=false;
+  $("startBtn").hidden=true;$("status").hidden=false;$("runRow").hidden=false;
+  if(BGMCFG.on)BGM.start();
   say("しゃがんで、立って！",2000);
   setTimeout(()=>{if(!gotMotion&&running){$("status").hidden=true;$("notice").hidden=false;$("tapBtn").hidden=false;
     $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをSafariやChromeで直接開いてください。";}},1800);
 }
 $("startBtn").addEventListener("click",start);
 function stop(quiet){
-  running=false;
+  running=false;BGM.stop();
   window.removeEventListener("devicemotion",onMotion);
   try{wake?.release();}catch(e){}wake=null;
-  ["status","tapBtn","notice","stopBtn"].forEach(id=>$(id).hidden=true);
+  ["status","tapBtn","notice","runRow"].forEach(id=>$(id).hidden=true);
   const b=$("startBtn");b.hidden=false;b.textContent="スクワットを再開する";
   const c=S.days[todayKey()]||0,left=GOAL-c,n=sessionReps;
   let text,speech;
@@ -521,6 +571,11 @@ function stop(quiet){
   if(!quiet){say(text,6000);speakLine({text,speech});}lastRepAt=Date.now();
 }
 $("stopBtn").addEventListener("click",()=>stop());
+$("bgmQuick").addEventListener("click",()=>setBgm(!BGMCFG.on));
+$("bgmOn").addEventListener("change",e=>setBgm(e.target.checked));
+$("bgmVol").value=BGMCFG.vol;$("bgmVolOut").textContent=Math.round(BGMCFG.vol*100)+"%";
+$("bgmVol").addEventListener("input",e=>{BGMCFG.vol=+e.target.value;$("bgmVolOut").textContent=Math.round(BGMCFG.vol*100)+"%";saveBGM();BGM.setVol();});
+syncBgmUI();
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
 $("voiceOn").checked=voiceOn;
 $("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)testVoice();$("voiceOpts").hidden=!voiceOn;});
