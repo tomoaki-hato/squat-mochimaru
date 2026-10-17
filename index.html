@@ -381,11 +381,11 @@ function rep(){
     render(S.achieved);
     celebrate(S.achieved,stageOf(S.achieved)!==st,S.health>wasH);
     [660,880,1100].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
-    setTimeout(()=>speak(pickVoice(GOAL)),450);
+    setTimeout(()=>speak(pickVoice(GOAL).speech),450);
   }else{
     save();render();
     const n=before+1;
-    if(n%10===0){const v=pickVoice(n);say(v,2200);speak(v);}
+    if(n%10===0){const v=pickVoice(n);say(v.text,2200);speak(v.speech);}
     else say(n>GOAL?"ボーナス！":CHEERS[Math.floor(Math.random()*CHEERS.length)],1200);
     beep(620);
   }
@@ -406,22 +406,25 @@ function onMotion(e){
   const mf=$("meterFill"),hh=Math.min(18,Math.abs(f)/T*12);mf.style.height=hh+"px";mf.style.top=(f>0?18-hh:18)+"px";
 }
 /* ---------- voice every 10 reps (Web Speech API) ---------- */
+/* [bubble text, robot speech]: katakana split by 。 makes the reader speak in flat, choppy beats */
 const VOICE={
-  10:["いい調子！","10回！ナイス！","その調子！"],
-  20:["きてるよ！","20回！いい感じ！","どんどんいこう！"],
-  30:["半分こえたよ！","30回！すごい！","絶好調だね！"],
-  40:["あと10回！がんばれ！","40回！もうすぐだよ！","ラストスパート！"],
-  50:["やったね！目標達成！","やったね！50回達成！"],
-  bonus:["まだいける！すごすぎ！","ボーナスタイム！","かっこいい！"]
+  10:[["いい調子！","イイ。チョウシ。デス。"],["10回！ナイス！","ジュッカイ。タッセイ。ナイス。"],["その調子！","ソノ。チョウシ。デス。"]],
+  20:[["きてるよ！","キテ。マス。キテ。マス。"],["20回！いい感じ！","ニジュッカイ。イイ。カンジ。デス。"],["どんどんいこう！","ドンドン。イキ。マショウ。"]],
+  30:[["半分こえたよ！","ハンブン。トッパ。シマシタ。"],["30回！すごい！","サンジュッカイ。スゴイ。デス。"],["絶好調だね！","ゼッコウチョウ。ヲ。カクニン。"]],
+  40:[["あと10回！がんばれ！","ノコリ。ジュッカイ。ガンバレ。"],["40回！もうすぐだよ！","ヨンジュッカイ。ゴール。マデ。アト。スコシ。"],["ラストスパート！","ラスト。スパート。カイシ。"]],
+  50:[["やったね！目標達成！","ヤッタネ。モクヒョウ。タッセイ。デス。"],["やったね！50回達成！","ゴジュッカイ。タッセイ。オメデトウ。ゴザイマス。"]],
+  bonus:[["まだいける！すごすぎ！","マダ。イケ。マス。"],["ボーナスタイム！","ボーナス。タイム。トツニュウ。"],["かっこいい！","カッコイイ。デス。"]]
 };
-function pickVoice(n){const p=VOICE[n]||VOICE.bonus;const t=p[Math.floor(Math.random()*p.length)];return n>GOAL?`${n}回！${t}`:t;}
+function pickVoice(n){const p=VOICE[n]||VOICE.bonus;const [t,v]=p[Math.floor(Math.random()*p.length)];return n>GOAL?{text:`${n}回！${t}`,speech:`${n}カイ。${v}`}:{text:t,speech:v};}
+function robotBlip(){try{if(!actx)return;[1320,990,1560].forEach((f,i)=>{const t=actx.currentTime+i*.09,o=actx.createOscillator(),g=actx.createGain();o.type="square";o.frequency.value=f;g.gain.setValueAtTime(.06,t);g.gain.setValueAtTime(0,t+.07);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.08);});}catch(e){}}
 let voiceOn=true;try{voiceOn=localStorage.getItem("mochimaru-voice")!=="off";}catch(e){}
 let jaVoice=null;
 function findVoice(){try{const vs=speechSynthesis.getVoices();jaVoice=vs.find(v=>/^ja/i.test(v.lang)&&/Kyoko|O-ren|Nanami|Google/i.test(v.name))||vs.find(v=>/^ja/i.test(v.lang))||null;}catch(e){}}
 try{findVoice();speechSynthesis.addEventListener?.("voiceschanged",findVoice);}catch(e){}
 function speak(text,vol){
   if(!voiceOn||!("speechSynthesis" in window))return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=1.6;u.rate=1.1;u.volume=vol??1;speechSynthesis.speak(u);}catch(e){}
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=0.1;u.rate=0.85;u.volume=vol??1;
+    if(vol===0)speechSynthesis.speak(u);else{robotBlip();setTimeout(()=>{try{speechSynthesis.speak(u);}catch(e){}},320);}}catch(e){}
 }
 function unlockVoice(){speak("。",0);} // iPhone needs the first utterance inside a tap
 function ensureAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
@@ -438,7 +441,7 @@ async function start(){
 $("startBtn").addEventListener("click",start);
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
 $("voiceOn").checked=voiceOn;
-$("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}if(voiceOn)speak("いい調子！");});
+$("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)speak("イイ。チョウシ。デス。");});
 $("skipBtn").addEventListener("click",()=>{S.offset++;const m=rollover();render();say(m?`目標に届かなかった…（${HEALTH[S.health].name}）`:HEALTH[S.health].line,2600);});
 
 function bindReset(){
