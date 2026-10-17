@@ -32,6 +32,13 @@ h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
 .hearts{font-size:17px;letter-spacing:1px;color:var(--coral)}
 .hearts .off{color:#C9D6D2}
 
+.users{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.users button{font:inherit;border:0;border-radius:14px;padding:7px 4px;background:var(--card);color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;box-shadow:0 2px 0 var(--floor)}
+.users b{font-weight:900;font-size:14px}
+.users small{font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.users button.on{background:var(--ink);color:#fff;box-shadow:none}
+.users button.on small{color:#C9D6D2}
+.users button:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
 .scene{position:relative;background:var(--card);border-radius:22px;padding:8px;box-shadow:0 3px 0 var(--floor)}
 #room{display:block;width:100%;height:auto;cursor:pointer}
 .stage{position:relative}
@@ -114,6 +121,7 @@ select{font:inherit;font-weight:700;font-size:13px;border:0;border-radius:10px;p
     <div class="name"><h1>もちまる</h1><span class="tag" id="stageTag">たまご</span></div>
     <div class="health"><span id="healthText">げんき</span><span class="hearts" id="hearts"></span></div>
   </header>
+  <div class="users" id="users" role="tablist" aria-label="プレイする人"></div>
 
   <div class="scene" id="scene">
     <div class="stage"><svg id="room" viewBox="0 0 360 270" role="img" aria-label="もちまるのお部屋"></svg><div id="pet3d" aria-hidden="true"></div></div>
@@ -207,13 +215,37 @@ const pad=n=>String(n).padStart(2,"0");
 const keyOf=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const dateOf=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d);};
 
-let S={achieved:0,health:3,days:{},last:null,offset:0};
+const USERS=[{id:"papa",name:"パパ"},{id:"mama",name:"ママ"},{id:"son",name:"息子"},{id:"daughter",name:"娘"}];
+let UID="papa";try{const u=localStorage.getItem("mochimaru-user");if(USERS.some(x=>x.id===u))UID=u;}catch(e){}
+const userName=id=>(USERS.find(u=>u.id===(id||UID))||USERS[0]).name;
+const freshS=()=>({achieved:0,health:3,days:{},last:null,offset:0});
+let S=freshS();
 const DAY_START_HOUR=4; // the day switches at 4:00 am
 function todayDate(){const d=new Date(Date.now()-DAY_START_HOUR*3600e3);d.setHours(0,0,0,0);d.setDate(d.getDate()+S.offset);return d;}
 const todayKey=()=>keyOf(todayDate());
-function load(){try{const v=JSON.parse(localStorage.getItem("mochimaru-v3"));if(v&&typeof v==="object")S=Object.assign(S,v);}catch(e){}}
+/* each player keeps their own pet and room; the pre-multiplayer save becomes パパ's */
+function rawFor(id){let raw=null;try{raw=localStorage.getItem("mochimaru-v3-"+id);if(!raw&&id==="papa")raw=localStorage.getItem("mochimaru-v3");}catch(e){}return raw;}
+function load(){S=freshS();try{const v=JSON.parse(rawFor(UID));if(v&&typeof v==="object")S=Object.assign(freshS(),v);}catch(e){}}
+function peekUser(id){if(id===UID)return S;try{return Object.assign(freshS(),JSON.parse(rawFor(id))||{});}catch(e){return freshS();}}
+function userDayKey(s){const d=new Date(Date.now()-DAY_START_HOUR*3600e3);d.setHours(0,0,0,0);d.setDate(d.getDate()+(s.offset||0));return keyOf(d);}
+function renderUsers(){
+  $("users").innerHTML=USERS.map(u=>{const s=peekUser(u.id),c=(s.days||{})[userDayKey(s)]||0,on=u.id===UID;
+    return `<button role="tab" aria-selected="${on}" class="${on?"on":""}" data-u="${u.id}"><b>${u.name}</b><small>${c>=GOAL?"達成！":c+"/"+GOAL}</small></button>`;}).join("");
+  $("users").querySelectorAll("button").forEach(b=>b.onclick=()=>switchUser(b.dataset.u));
+}
+function switchUser(id){
+  if(id===UID)return;
+  if(running)stop(true);
+  document.querySelectorAll(".celebrate").forEach(e=>e.remove());
+  if(backup){S=backup;backup=null;}
+  save();UID=id;try{localStorage.setItem("mochimaru-user",id);}catch(e){}
+  load();if(!S.firstDay)S.firstDay=S.last||todayKey();
+  $("startBtn").textContent="スクワットをはじめる";
+  const missed=rollover();render();PET3D?.hop();
+  say(missed?`${userName()}、${missed}日、目標に届かなかった…`:`${userName()}、いっしょにがんばろ！`,3500);
+}
 let backup=null; // set while the debug panel is previewing
-function save(){if(backup)return;try{localStorage.setItem("mochimaru-v3",JSON.stringify(S));}catch(e){}}
+function save(){if(backup)return;try{localStorage.setItem("mochimaru-v3-"+UID,JSON.stringify(S));}catch(e){}}
 
 /* days that ended below the goal (including days the game was not opened) cost one heart each */
 function rollover(){
@@ -326,6 +358,7 @@ function say(t,ms){const b=$("bubble");b.textContent=t;b.style.opacity=1;clearTi
 function nextItem(a){const ks=Object.keys(ITEMS).map(Number).sort((x,y)=>x-y);return ks.find(k=>k>a);}
 function render(fresh){
   const tk=todayKey(), c=S.days[tk]||0, a=S.achieved, h=S.health;
+  renderUsers();
   $("room").innerHTML=roomSVG(a,h,fresh);
   if(PET3D)PET3D.set(stageOf(a),h);
   $("stageTag").textContent=STAGES[stageOf(a)].name;
@@ -463,7 +496,7 @@ async function start(){
     $("notice").textContent="この画面ではスマホの動きセンサーが使えないようです。今はタップで1回ずつ数えられます。センサーで数えるには、このゲームをSafariやChromeで直接開いてください。";}},1800);
 }
 $("startBtn").addEventListener("click",start);
-function stop(){
+function stop(quiet){
   running=false;
   window.removeEventListener("devicemotion",onMotion);
   try{wake?.release();}catch(e){}wake=null;
@@ -474,9 +507,9 @@ function stop(){
   if(n===0){text="今回は0回だったね。またあとでやろ！";speech="コンカイ。ゼロカイ。マタ。アトデ。";}
   else if(left>0){text=`おつかれさま！今回${n}回。今日はあと${left}回だよ`;speech=`コンカイ。${n}カイ。ノコリ。${left}カイ。オツカレ。サマデス。`;}
   else{text=`おつかれさま！今回${n}回。今日の目標は達成だよ`;speech=`コンカイ。${n}カイ。ホンジツ。ニンム。カンリョウ。オツカレ。サマデス。`;}
-  say(text,6000);speakLine({text,speech});lastRepAt=Date.now();
+  if(!quiet){say(text,6000);speakLine({text,speech});}lastRepAt=Date.now();
 }
-$("stopBtn").addEventListener("click",stop);
+$("stopBtn").addEventListener("click",()=>stop());
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
 $("voiceOn").checked=voiceOn;
 $("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)testVoice();$("voiceOpts").hidden=!voiceOn;});
@@ -501,7 +534,7 @@ $("skipBtn").addEventListener("click",()=>{S.offset++;const m=rollover();render(
 function bindReset(){
   $("resetArea").innerHTML=`<button class="small" id="resetBtn">育成をリセット</button>`;
   $("resetBtn").onclick=()=>{
-    $("resetArea").innerHTML=`<span>たまごと何もないお部屋に戻す？</span><button class="small" id="yes">リセットする</button><button class="small" id="no">やめる</button>`;
+    $("resetArea").innerHTML=`<span>${userName()}のもちまるを、たまごと何もないお部屋に戻す？</span><button class="small" id="yes">リセットする</button><button class="small" id="no">やめる</button>`;
     $("yes").onclick=()=>{S={achieved:0,health:3,days:{},last:todayKeyFresh(),offset:0,firstDay:todayKeyFresh()};save();render();say(HEALTH[3].line);bindReset();};
     $("no").onclick=bindReset;
   };
@@ -721,12 +754,12 @@ let galleryBuilt=false;
 $("debug").addEventListener("toggle",()=>{if($("debug").open&&!galleryBuilt){galleryBuilt=true;buildGallery();}});
 
 function boot(data){
-  if(data&&data.S)S=data.S;else load();
+  if(data&&data.S){S=data.S;if(data.UID)UID=data.UID;}else load();
   if(!S.firstDay)S.firstDay=S.last||todayKey();
   const missed=rollover();render();
   if(missed)say(`${missed}日、目標に届かなかった…（${HEALTH[S.health].name}）`,4000);else talk();
 }
-window.claude?.hot?.snapshot?.(()=>({S}));
+window.claude?.hot?.snapshot?.(()=>({S,UID}));
 window.claude?.hot?.ready?window.claude.hot.ready(boot):boot(window.claude?.hot?.data??null);
 </script>
 
