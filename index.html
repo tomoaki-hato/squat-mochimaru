@@ -412,14 +412,14 @@ function onMotion(e){
   const mf=$("meterFill"),hh=Math.min(18,Math.abs(f)/T*12);mf.style.height=hh+"px";mf.style.top=(f>0?18-hh:18)+"px";
 }
 /* ---------- voice every 10 reps (Web Speech API) ---------- */
-/* [bubble text, robot speech]: katakana split by 。 makes the reader speak in flat, choppy beats */
+/* [bubble text, robot speech]: katakana split by 。 gives flat, choppy beats; the key word is said twice */
 const VOICE={
-  10:[["いい調子！","イイ。チョウシ。デス。"],["10回！ナイス！","ジュッカイ。タッセイ。ナイス。"],["その調子！","ソノ。チョウシ。デス。"]],
-  20:[["きてるよ！","キテ。マス。キテ。マス。"],["20回！いい感じ！","ニジュッカイ。イイ。カンジ。デス。"],["どんどんいこう！","ドンドン。イキ。マショウ。"]],
-  30:[["半分こえたよ！","ハンブン。トッパ。シマシタ。"],["30回！すごい！","サンジュッカイ。スゴイ。デス。"],["絶好調だね！","ゼッコウチョウ。ヲ。カクニン。"]],
-  40:[["あと10回！がんばれ！","ノコリ。ジュッカイ。ガンバレ。"],["40回！もうすぐだよ！","ヨンジュッカイ。ゴール。マデ。アト。スコシ。"],["ラストスパート！","ラスト。スパート。カイシ。"]],
-  50:[["やったね！目標達成！","ヤッタネ。モクヒョウ。タッセイ。デス。"],["やったね！50回達成！","ゴジュッカイ。タッセイ。オメデトウ。ゴザイマス。"]],
-  bonus:[["まだいける！すごすぎ！","マダ。イケ。マス。"],["ボーナスタイム！","ボーナス。タイム。トツニュウ。"],["かっこいい！","カッコイイ。デス。"]]
+  10:[["いい調子！","イイチョウシ。イイチョウシ。"],["10回！ナイス！","ジュッカイ。ナイス。ナイス。"],["その調子！","ソノチョウシ。ソノチョウシ。"]],
+  20:[["きてるよ！","キテル。キテル。"],["20回！いい感じ！","ニジュッカイ。イイネ。イイネ。"],["どんどんいこう！","ドンドン。ドンドン。"]],
+  30:[["半分こえたよ！","ハンブン。トッパ。トッパ。"],["30回！すごい！","サンジュッカイ。スゴイ。スゴイ。"],["絶好調だね！","ゼッコウチョウ。ゼッコウチョウ。"]],
+  40:[["あと10回！がんばれ！","ノコリ。ジュッカイ。ガンバレ。ガンバレ。"],["40回！もうすぐだよ！","ヨンジュッカイ。モウスグ。モウスグ。"],["ラストスパート！","ラスト。スパート。スパート。"]],
+  50:[["やったね！目標達成！","ヤッタネ。ヤッタネ。モクヒョウ。タッセイ。"],["やったね！50回達成！","ゴジュッカイ。タッセイ。オメデトウ。オメデトウ。"]],
+  bonus:[["まだいける！すごすぎ！","マダ。イケル。イケル。"],["ボーナスタイム！","ボーナス。ボーナス。"],["かっこいい！","カッコイイ。カッコイイ。"]]
 };
 function pickVoice(n){const p=VOICE[n]||VOICE.bonus;const [t,v]=p[Math.floor(Math.random()*p.length)];return n>GOAL?{text:`${n}回！${t}`,speech:`${n}カイ。${v}`}:{text:t,speech:v};}
 function robotBlip(){try{if(!actx)return;[1320,990,1560].forEach((f,i)=>{const t=actx.currentTime+i*.09,o=actx.createOscillator(),g=actx.createGain();o.type="square";o.frequency.value=f;g.gain.setValueAtTime(.06,t);g.gain.setValueAtTime(0,t+.07);o.connect(g).connect(actx.destination);o.start(t);o.stop(t+.08);});}catch(e){}}
@@ -429,7 +429,7 @@ function findVoice(){try{const vs=speechSynthesis.getVoices();jaVoice=vs.find(v=
 try{findVoice();speechSynthesis.addEventListener?.("voiceschanged",findVoice);}catch(e){}
 function speak(text,vol){
   if(!voiceOn||!("speechSynthesis" in window))return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=0.1;u.rate=3;u.volume=vol??1;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=0.1;u.rate=2.2;u.volume=vol??1;
     if(vol===0)speechSynthesis.speak(u);else{robotBlip();setTimeout(()=>{try{speechSynthesis.speak(u);}catch(e){}},220);}}catch(e){}
 }
 function unlockVoice(){speak("。",0);} // iPhone needs the first utterance inside a tap
@@ -462,7 +462,7 @@ function stop(){
 $("stopBtn").addEventListener("click",stop);
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
 $("voiceOn").checked=voiceOn;
-$("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)speak("イイ。チョウシ。デス。");});
+$("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}ensureAudio();if(voiceOn)speak("ナイス。ナイス。");});
 $("skipBtn").addEventListener("click",()=>{S.offset++;const m=rollover();render();say(m?`目標に届かなかった…（${HEALTH[S.health].name}）`:HEALTH[S.health].line,2600);});
 
 function bindReset(){
