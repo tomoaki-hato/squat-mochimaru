@@ -135,6 +135,7 @@ input[type=range]{flex:1;accent-color:var(--coral)}
       <summary>設定</summary>
       <div class="settings">
         <label for="sens">感度 <input type="range" id="sens" min="1" max="5" value="3"></label>
+        <label for="voiceOn">10回ごとに声で応援 <input type="checkbox" id="voiceOn" checked style="width:22px;height:22px;accent-color:var(--coral)"></label>
         <p class="hint">1日50回で目標達成。1日の区切りは朝4時です。達成するたびにもちまるが育ち、お部屋に家具が届きます。達成できなかった日が続くと、だんだん弱って病気になります。</p>
         <div class="row"><button class="small" id="skipBtn">テスト：次の日にする</button></div>
         <div class="row" id="resetArea"></div>
@@ -380,9 +381,12 @@ function rep(){
     render(S.achieved);
     celebrate(S.achieved,stageOf(S.achieved)!==st,S.health>wasH);
     [660,880,1100].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+    setTimeout(()=>speak(pickVoice(GOAL)),450);
   }else{
     save();render();
-    say(before+1>GOAL?"ボーナス！":(GOAL-before-1===10?"あと10回！":CHEERS[Math.floor(Math.random()*CHEERS.length)]),1200);
+    const n=before+1;
+    if(n%10===0){const v=pickVoice(n);say(v,2200);speak(v);}
+    else say(n>GOAL?"ボーナス！":CHEERS[Math.floor(Math.random()*CHEERS.length)],1200);
     beep(620);
   }
   petHop();heart();
@@ -401,9 +405,28 @@ function onMotion(e){
   else if(f<-T*0.8){if(phase===1&&now-posStart>120&&now-lastRep>900){lastRep=now;rep();}phase=-1;}
   const mf=$("meterFill"),hh=Math.min(18,Math.abs(f)/T*12);mf.style.height=hh+"px";mf.style.top=(f>0?18-hh:18)+"px";
 }
+/* ---------- voice every 10 reps (Web Speech API) ---------- */
+const VOICE={
+  10:["いい調子！","10回！ナイス！","その調子！"],
+  20:["きてるよ！","20回！いい感じ！","どんどんいこう！"],
+  30:["半分こえたよ！","30回！すごい！","絶好調だね！"],
+  40:["あと10回！がんばれ！","40回！もうすぐだよ！","ラストスパート！"],
+  50:["やったね！目標達成！","やったね！50回達成！"],
+  bonus:["まだいける！すごすぎ！","ボーナスタイム！","かっこいい！"]
+};
+function pickVoice(n){const p=VOICE[n]||VOICE.bonus;const t=p[Math.floor(Math.random()*p.length)];return n>GOAL?`${n}回！${t}`:t;}
+let voiceOn=true;try{voiceOn=localStorage.getItem("mochimaru-voice")!=="off";}catch(e){}
+let jaVoice=null;
+function findVoice(){try{const vs=speechSynthesis.getVoices();jaVoice=vs.find(v=>/^ja/i.test(v.lang)&&/Kyoko|O-ren|Nanami|Google/i.test(v.name))||vs.find(v=>/^ja/i.test(v.lang))||null;}catch(e){}}
+try{findVoice();speechSynthesis.addEventListener?.("voiceschanged",findVoice);}catch(e){}
+function speak(text,vol){
+  if(!voiceOn||!("speechSynthesis" in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=1.6;u.rate=1.1;u.volume=vol??1;speechSynthesis.speak(u);}catch(e){}
+}
+function unlockVoice(){speak("。",0);} // iPhone needs the first utterance inside a tap
 function ensureAudio(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
 async function start(){
-  ensureAudio();
+  ensureAudio();unlockVoice();
   try{if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function")await DeviceMotionEvent.requestPermission();}catch(e){}
   try{await navigator.wakeLock?.request("screen");}catch(e){}
   window.addEventListener("devicemotion",onMotion);
@@ -414,6 +437,8 @@ async function start(){
 }
 $("startBtn").addEventListener("click",start);
 $("tapBtn").addEventListener("click",()=>{ensureAudio();rep();});
+$("voiceOn").checked=voiceOn;
+$("voiceOn").addEventListener("change",e=>{voiceOn=e.target.checked;try{localStorage.setItem("mochimaru-voice",voiceOn?"on":"off");}catch(err){}if(voiceOn)speak("いい調子！");});
 $("skipBtn").addEventListener("click",()=>{S.offset++;const m=rollover();render();say(m?`目標に届かなかった…（${HEALTH[S.health].name}）`:HEALTH[S.health].line,2600);});
 
 function bindReset(){
