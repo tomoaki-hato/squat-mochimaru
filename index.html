@@ -425,7 +425,7 @@ function findVoice(){try{const vs=speechSynthesis.getVoices();jaVoice=vs.find(v=
 try{findVoice();speechSynthesis.addEventListener?.("voiceschanged",findVoice);}catch(e){}
 function speak(text,vol){
   if(!voiceOn||!("speechSynthesis" in window))return;
-  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=0.1;u.rate=0.85;u.volume=vol??1;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(jaVoice)u.voice=jaVoice;u.pitch=0.1;u.rate=1.7;u.volume=vol??1;
     if(vol===0)speechSynthesis.speak(u);else{robotBlip();setTimeout(()=>{try{speechSynthesis.speak(u);}catch(e){}},320);}}catch(e){}
 }
 function unlockVoice(){speak("。",0);} // iPhone needs the first utterance inside a tap
